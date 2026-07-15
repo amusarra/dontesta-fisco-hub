@@ -63,6 +63,23 @@ jobs:
         uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # ── macOS code signing & notarization ──────────────────────────────
+          # Con certificato Developer ID (opzionale, richiede Apple Developer Program):
+          #   APPLE_CERTIFICATE          base64 del .p12 esportato da Keychain
+          #   APPLE_CERTIFICATE_PASSWORD password del .p12
+          #   APPLE_SIGNING_IDENTITY     "Developer ID Application: Nome (TEAMID)"
+          #   APPLE_ID                   email Apple ID
+          #   APPLE_PASSWORD             App-Specific Password da appleid.apple.com
+          #   APPLE_TEAM_ID              10 caratteri Team ID
+          # Se i secret non sono impostati, tauri.conf.json usa signingIdentity "-"
+          # (firma ad-hoc locale): Gatekeeper mostra "sviluppatore non verificato"
+          # invece di "danneggiato"; l'utente può aprire con tasto destro → Apri.
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           tagName: ${{ github.ref_name || 'v1.2.2-draft' }}
           releaseName: "DonTesta FatturaPA ${{ github.ref_name || 'v1.2.2-draft' }}"
@@ -79,6 +96,16 @@ jobs:
             - **Pipeline CI/CD**: Build e rilascio automatici tramite GitHub Actions.
 
             Consultare il file CHANGELOG.md per l'elenco completo dei cambiamenti.
+
+            ---
+
+            > **⚠️ macOS — Prima apertura**
+            > Al primo avvio macOS potrebbe avvisare che lo sviluppatore non è verificato
+            > (firma ad-hoc, senza certificato Apple Developer).
+            > Fai **tasto destro → Apri** sul DMG e poi sull'app, oppure esegui da Terminale:
+            > ```bash
+            > xattr -cr /Applications/DonTestaFatturaPA.app
+            > ```
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
