@@ -1,0 +1,7 @@
+{
+  "name": "DonTesta FatturaPA",
+  "description": "Visualizzatore open-source e cross-platform per fatture elettroniche XML (FatturaPA), ispirato e supportato dal Blog di Antonio Musarra (dontesta.it).",
+  "version": "1.0.0",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

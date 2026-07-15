@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DonTesta FatturaPA • Visualizzatore di Fatture Elettroniche XML</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts (Inter & Space Grotesk) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .font-display {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 selection:bg-blue-500 selection:text-white">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-50 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <a href="https://www.dontesta.it" target="_blank" rel="noopener noreferrer" class="hover:opacity-90 transition-opacity">
+          <span class="font-display font-bold text-lg tracking-tight">DonTesta <span class="text-blue-400 font-black">FatturaPA</span></span>
+        </a>
+        <span class="bg-blue-600/20 text-[9px] text-blue-400 px-1.5 py-0.5 rounded-sm border border-blue-500/30 font-bold uppercase tracking-wider">v1.0.0</span>
+      </div>
+      <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-300">
+        <a href="#features" class="hover:text-white transition-colors">Caratteristiche</a>
+        <a href="#how-it-works" class="hover:text-white transition-colors">Come Funziona</a>
+        <a href="#desktop" class="hover:text-white transition-colors">Versione Desktop</a>
+        <a href="#ci-cd" class="hover:text-white transition-colors">CI/CD & Github</a>
+      </nav>
+      <div class="flex items-center gap-3">
+        <a href="https://www.dontesta.it" target="_blank" rel="noopener noreferrer" class="text-xs font-semibold bg-slate-800 hover:bg-slate-750 text-white px-3.5 py-2 rounded-lg transition-all border border-slate-700">
+          Visita dontesta.it
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="relative bg-slate-900 text-white pt-24 pb-20 overflow-hidden">
+    <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(37,99,235,0.15),transparent_50%)]"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        <!-- Text -->
+        <div class="lg:col-span-7 space-y-6">
+          <div class="inline-flex items-center gap-1.5 bg-blue-500/10 text-blue-400 px-3 py-1 rounded-full text-xs font-bold border border-blue-500/20 uppercase tracking-wide">
+            <span>Desktop & Web App</span>
+          </div>
+          <h1 class="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-none text-white">
+            Visualizzatore Universale per <span class="text-blue-400">Fatture Elettroniche</span>
+          </h1>
+          <p class="text-lg text-slate-300 leading-relaxed max-w-2xl">
+            Un'applicazione open-source e cross-platform per visualizzare, validare ed analizzare le fatture elettroniche XML (FatturaPA). Ispirato e supportato dal Blog di <strong>Antonio Musarra (dontesta.it)</strong>.
+          </p>
+          <div class="flex flex-wrap gap-4 pt-2">
+            <a href="#desktop" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-bold shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-all text-sm flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+              Scarica Desktop App
+            </a>
+            <a href="#how-it-works" class="bg-slate-800 hover:bg-slate-750 border border-slate-700 text-slate-200 px-6 py-3 rounded-lg font-bold transition-all text-sm">
+              Scopri come funziona
+            </a>
+          </div>
+        </div>
+        <!-- Mockup -->
+        <div class="lg:col-span-5 relative">
+          <div class="relative bg-slate-850 rounded-2xl border border-slate-700 shadow-2xl overflow-hidden aspect-[4/3] flex flex-col">
+            <!-- Mac window style bar -->
+            <div class="bg-slate-800 px-4 py-3 border-b border-slate-700 flex items-center justify-between">
+              <div class="flex gap-1.5">
+                <span class="w-3 h-3 bg-red-500 rounded-full inline-block"></span>
+                <span class="w-3 h-3 bg-yellow-500 rounded-full inline-block"></span>
+                <span class="w-3 h-3 bg-green-500 rounded-full inline-block"></span>
+              </div>
+              <span class="text-xs text-slate-400 font-mono">DonTesta FatturaPA v1.0.0</span>
+              <div class="w-8"></div>
+            </div>
+            <!-- Mock Content -->
+            <div class="flex-1 bg-slate-900 p-5 flex flex-col justify-between text-xs">
+              <div class="border border-dashed border-blue-500/30 rounded-xl p-6 bg-blue-950/20 flex flex-col items-center justify-center text-center flex-1">
+                <svg class="w-10 h-10 text-blue-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                <span class="text-slate-300 font-bold block mb-1">Trascina qui il file XML o P7M</span>
+                <span class="text-slate-500 text-[10px]">I dati rimangono sicuri sul tuo dispositivo</span>
+              </div>
+              <div class="mt-4 pt-3 border-t border-slate-800 flex justify-between items-center text-slate-400 text-[10px]">
+                <span>Pronto per l'importazione</span>
+                <span class="text-emerald-400 flex items-center gap-1">● Database Locale Attivo</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Grid -->
+  <section id="features" class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
+        <h2 class="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
+          Tutto il necessario per gestire le tue Fatture Elettroniche
+        </h2>
+        <p class="text-slate-500">
+          Un'interfaccia raffinata abbinata a un potente motore di parsing client-side, senza inviare dati sensibili a server remoti.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <!-- Feature 1 -->
+        <div class="p-6 bg-slate-50 rounded-xl border border-slate-200/60 hover:border-blue-500/20 hover:shadow-lg transition-all space-y-4">
+          <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center font-bold text-lg">
+            📄
+          </div>
+          <h3 class="text-lg font-bold text-slate-900">Supporto XML e P7M</h3>
+          <p class="text-sm text-slate-500 leading-relaxed">
+            Consente di caricare direttamente sia i file standard XML (FatturaPA) sia i file firmati digitalmente in formato CAdES (.xml.p7m).
+          </p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="p-6 bg-slate-50 rounded-xl border border-slate-200/60 hover:border-blue-500/20 hover:shadow-lg transition-all space-y-4">
+          <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center font-bold text-lg">
+            🔑
+          </div>
+          <h3 class="text-lg font-bold text-slate-900">Estrazione Firma Digitale Reale</h3>
+          <p class="text-sm text-slate-500 leading-relaxed">
+            Tramite la libreria open-source <strong>node-forge</strong>, decodifica il payload PKCS#7 del file <code>.p7m</code> ed estrae i metadati reali del certificato X.509: firmatario (CN), ente emittente, numero seriale, validità, Key Usage, CRL, OCSP e SAN.
+          </p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="p-6 bg-slate-50 rounded-xl border border-slate-200/60 hover:border-blue-500/20 hover:shadow-lg transition-all space-y-4">
+          <div class="w-10 h-10 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center font-bold text-lg">
+            💻
+          </div>
+          <h3 class="text-lg font-bold text-slate-900">Desktop nativo (Tauri v2)</h3>
+          <p class="text-sm text-slate-500 leading-relaxed">
+            Grazie all'integrazione con Tauri v2, l'app è compilata nativamente come eseguibile desktop leggero e sicuro per Windows, macOS (Apple Silicon e Intel) e Linux.
+          </p>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="p-6 bg-slate-50 rounded-xl border border-slate-200/60 hover:border-blue-500/20 hover:shadow-lg transition-all space-y-4">
+          <div class="w-10 h-10 bg-yellow-100 text-yellow-600 rounded-lg flex items-center justify-center font-bold text-lg">
+            📊
+          </div>
+          <h3 class="text-lg font-bold text-slate-900">Filtri Temporali e Ricerca</h3>
+          <p class="text-sm text-slate-500 leading-relaxed">
+            Organizza e filtra le tue fatture per anno, mese o tramite ricerca testuale su fornitore (Cedente) e cliente (Cessionario).
+          </p>
+        </div>
+
+        <!-- Feature 5 -->
+        <div class="p-6 bg-slate-50 rounded-xl border border-slate-200/60 hover:border-blue-500/20 hover:shadow-lg transition-all space-y-4">
+          <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center font-bold text-lg">
+            🔒
+          </div>
+          <h3 class="text-lg font-bold text-slate-900">Sicurezza Totale (Zero Server)</h3>
+          <p class="text-sm text-slate-500 leading-relaxed">
+            Il parsing dei file XML avviene interamente all'interno della sandbox del tuo browser o dell'app desktop. I byte del file `.p7m` non lascono mai il dispositivo, e i metadati della firma sono estratti localmente tramite <strong>node-forge</strong>.
+          </p>
+        </div>
+
+        <!-- Feature 6 -->
+        <div class="p-6 bg-slate-50 rounded-xl border border-slate-200/60 hover:border-blue-500/20 hover:shadow-lg transition-all space-y-4">
+          <div class="w-10 h-10 bg-red-100 text-red-600 rounded-lg flex items-center justify-center font-bold text-lg">
+            ⚙️
+          </div>
+          <h3 class="text-lg font-bold text-slate-900">Automazione CI/CD (4 piattaforme)</h3>
+          <p class="text-sm text-slate-500 leading-relaxed">
+            Le build desktop vengono generate automaticamente ad ogni rilascio tramite GitHub Actions su quattro runner in parallelo: macOS Apple Silicon, macOS Intel, Windows e Linux.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it Works Section -->
+  <section id="how-it-works" class="py-20 bg-slate-100 border-t border-b border-slate-200/60">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
+        <h2 class="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
+          Come funziona l'applicazione
+        </h2>
+        <p class="text-slate-500">
+          Tre semplici passaggi per visualizzare le tue fatture con dettagli professionali.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Step 1 -->
+        <div class="bg-white p-8 rounded-xl border border-slate-200 shadow-sm relative">
+          <div class="absolute top-4 right-4 text-4xl font-black text-slate-100 select-none">01</div>
+          <div class="space-y-4">
+            <h4 class="text-base font-bold text-slate-900 flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-blue-500 text-white text-xs flex items-center justify-center font-bold">1</span>
+              Caricamento File
+            </h4>
+            <p class="text-sm text-slate-500 leading-relaxed">
+              Se il file è firmato digitalmente (`.p7m`), l'app estrae automaticamente l'XML interno tramite la libreria <strong>node-forge</strong> (PKCS#7/CMS), senza nessun plugin esterno.
+            </p>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="bg-white p-8 rounded-xl border border-slate-200 shadow-sm relative">
+          <div class="absolute top-4 right-4 text-4xl font-black text-slate-100 select-none">02</div>
+          <div class="space-y-4">
+            <h4 class="text-base font-bold text-slate-900 flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-blue-500 text-white text-xs flex items-center justify-center font-bold">2</span>
+              Parsing & Estrazione
+            </h4>
+            <p class="text-sm text-slate-500 leading-relaxed">
+              Vengono analizzate tutte le sezioni ministeriali della fattura (Cedente/Prestatore, Cessionario/Committente, Dettaglio Linee, Aliquote IVA, Dati di Pagamento, Allegati) e i metadati del certificato di firma digitale X.509.
+            </p>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="bg-white p-8 rounded-xl border border-slate-200 shadow-sm relative">
+          <div class="absolute top-4 right-4 text-4xl font-black text-slate-100 select-none">03</div>
+          <div class="space-y-4">
+            <h4 class="text-base font-bold text-slate-900 flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-blue-500 text-white text-xs flex items-center justify-center font-bold">3</span>
+              Visualizzazione & Download
+            </h4>
+            <p class="text-sm text-slate-500 leading-relaxed">
+              L'interfaccia visualizza un foglio di stile simile al modello ministeriale ufficiale. Consente di scaricare l'XML pulito o di stampare direttamente la fattura.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Desktop App Release section -->
+  <section id="desktop" class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="bg-slate-900 text-white rounded-2xl overflow-hidden shadow-2xl border border-slate-800 p-8 sm:p-12 relative">
+        <div class="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
+        <div class="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div class="space-y-6">
+            <h2 class="font-display text-3xl sm:text-4xl font-extrabold tracking-tight">
+              DonTesta FatturaPA per Desktop
+            </h2>
+            <p class="text-slate-300 leading-relaxed">
+              Porta il visualizzatore direttamente sulla barra delle applicazioni o sul dock del tuo sistema operativo. Più veloce, indipendente dal browser e in grado di gestire i tuoi file XML in totale riservatezza locale.
+            </p>
+            <div class="space-y-3">
+              <div class="flex items-center gap-2.5 text-sm text-slate-300">
+                <span class="text-blue-400 font-bold text-base">✓</span>
+                <span><strong>Windows</strong>: installer eseguibile autonomo (.msi, .exe)</span>
+              </div>
+              <div class="flex items-center gap-2.5 text-sm text-slate-300">
+                <span class="text-blue-400 font-bold text-base">✓</span>
+                <span><strong>macOS</strong>: pacchetti DMG pronti per Apple Silicon e Intel</span>
+              </div>
+              <div class="flex items-center gap-2.5 text-sm text-slate-300">
+                <span class="text-blue-400 font-bold text-base">✓</span>
+                <span><strong>Linux</strong>: installer Debian (.deb) e pacchetti universali AppImage</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-slate-850 p-6 rounded-xl border border-slate-800 space-y-4">
+            <h4 class="font-bold text-lg">Build & Release Automatiche</h4>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              Il software utilizza le GitHub Actions integrate per compilare i sorgenti in Rust e TypeScript su vere macchine virtuali macOS (Apple Silicon e Intel), Windows e Linux, assicurando la massima compatibilità binaria.
+            </p>
+            <div class="pt-2 border-t border-slate-800">
+              <span class="text-[11px] text-slate-500 font-mono block mb-2">Comando di Build Locale:</span>
+              <code class="block bg-slate-950 p-2.5 rounded text-xs text-blue-400 font-mono">npm run tauri build</code>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CI/CD and Release Pipeline -->
+  <section id="ci-cd" class="py-20 bg-slate-50 border-t border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
+        <h2 class="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
+          La Pipeline CI/CD di Rilascio
+        </h2>
+        <p class="text-slate-500">
+      Quattro piattaforme, un solo push: build parallele su macOS Apple Silicon, macOS Intel, Windows e Linux.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+        <div class="lg:col-span-5 space-y-6">
+          <h3 class="text-xl font-bold text-slate-900">Tracciamento delle Release</h3>
+          <p class="text-sm text-slate-500 leading-relaxed">
+            Ogni release viene tracciata semanticamente e registrata nel file <code>CHANGELOG.md</code>. La pipeline automatica si attiva inserendo un tag git (es. <code>v1.0.0</code>), innescando la compilazione parallela su quattro macchine cloud: macOS Apple Silicon, macOS Intel, Windows e Linux.
+          </p>
+          <div class="p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg text-xs text-blue-800">
+            <strong class="block mb-1 font-bold">Standardizzazione di Rilascio</strong>
+            I binari compilati contengono certificati crittografici deterministici e vengono firmati per garantire che l'utente stia eseguendo codice non manomesso e ufficiale del progetto.
+          </div>
+        </div>
+
+        <div class="lg:col-span-7 bg-slate-900 text-slate-200 rounded-xl p-6 border border-slate-800 font-mono text-xs overflow-x-auto space-y-2">
+          <div class="text-slate-500"># Pipeline Github Actions Workflow (.github/workflows/release.yml)</div>
+          <div><span class="text-blue-400">on:</span></div>
+          <div>  <span class="text-blue-400">push:</span></div>
+          <div>    <span class="text-blue-400">tags:</span></div>
+          <div>      - <span class="text-emerald-400">'v*'</span></div>
+          <div class="text-slate-500"># Compila su macchine reali in cloud</div>
+          <div><span class="text-blue-400">jobs:</span></div>
+          <div>  <span class="text-blue-400">build-and-release:</span></div>
+          <div><span class="text-blue-400">    runs-on:</span> [macos-latest (arm64), macos-latest (x86_64), ubuntu-22.04, windows-latest]</div>
+          <div>    <span class="text-blue-400">steps:</span></div>
+          <div>      - <span class="text-blue-400">uses:</span> actions/checkout@v4</div>
+          <div>      - <span class="text-blue-400">uses:</span> tauri-apps/tauri-action@v1</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-slate-900 text-slate-400 py-12 border-t border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center sm:text-left">
+      <div class="flex flex-col sm:flex-row justify-between items-center gap-6 border-b border-slate-800 pb-8">
+        <div>
+          <span class="font-display font-bold text-white text-lg tracking-tight">DonTesta <span class="text-blue-400 font-black">FatturaPA</span></span>
+          <p class="text-xs text-slate-500 mt-1">Visualizzatore universale open-source per fatturazione elettronica.</p>
+        </div>
+        <div class="flex gap-4 text-xs font-semibold">
+          <a href="#features" class="hover:text-white transition-colors">Caratteristiche</a>
+          <a href="#desktop" class="hover:text-white transition-colors">Download Desktop</a>
+          <a href="https://www.dontesta.it" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:underline">dontesta.it</a>
+        </div>
+      </div>
+      <div class="pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-[11px] text-slate-500">
+        <span>&copy; 2026 Antonio Musarra. Rilasciato sotto licenza MIT.</span>
+        <span>Ispirato dal Blog di <a href="https://www.dontesta.it" target="_blank" rel="noopener noreferrer" class="text-slate-400 hover:text-white hover:underline font-bold">dontesta.it</a></span>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

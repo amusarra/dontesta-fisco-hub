@@ -1,0 +1,22 @@
+[package]
+name = "dontesta-fatturapa"
+version = "1.0.0"
+description = "Visualizzatore di Fatture Elettroniche XML (FatturaPA)"
+authors = ["Antonio Musarra <antonio.musarra@gmail.com>"]
+license = "MIT"
+repository = "https://github.com/amusarra/dontesta-fatturapa"
+edition = "2021"
+rust-version = "1.77"
+
+[build-dependencies]
+tauri-build = { version = "2.0", features = [] }
+
+[dependencies]
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+tauri = { version = "2.0", features = [] }
+tauri-plugin-opener = "2"
+
+[features]
+default = [ "custom-protocol" ]
+custom-protocol = [ "tauri/custom-protocol" ]

@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+@media print {
+  /* Hide UI components not relevant for printing */
+  #dontesta-header,
+  #metrics-bar,
+  #dontesta-sidebar,
+  [id^="all-suppliers-btn"],
+  [id^="supplier-btn-"],
+  .print\:hidden,
+  .no-print,
+  #viewer-toolbar,
+  #custom-confirm-modal,
+  #toasts-container,
+  #folder-picker-card,
+  /* Hide middle invoice list column */
+  div.print\:hidden {
+    display: none !important;
+  }
+
+  /* Reset body constraints so the viewport prints cleanly */
+  html, body, #root, #dontesta-root-container {
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: white !important;
+    background-color: white !important;
+    color: #0f172a !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Ensure the main layout workspace container doesn't truncate contents */
+  #dontesta-workspace {
+    display: block !important;
+    overflow: visible !important;
+    height: auto !important;
+    width: 100% !important;
+  }
+
+  /* Force the active invoice viewer panel to cover the full printed page */
+  #dontesta-invoice-viewer {
+    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Expand scroll container so all content is rendered vertically */
+  #invoice-document-scroll {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    padding: 0 !important;
+    background: white !important;
+    background-color: white !important;
+  }
+
+  /* Force exact background colors and graphic accents to render in print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Set paper dimension parameters */
+  @page {
+    size: A4 portrait;
+    margin: 15mm;
+  }
+
+  /* Prevent page breaks occurring awkwardly across mid-row items */
+  tr, .card, blockquote, pre {
+    page-break-inside: avoid;
+  }
+}
+
+/* Scrollbar custom styles for filters */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+.scrollbar-thin::-webkit-scrollbar {
+  height: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}

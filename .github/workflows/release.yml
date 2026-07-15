@@ -1,0 +1,84 @@
+name: "Release & Desktop Build Pipeline"
+
+on:
+  push:
+    tags:
+      - 'v*'
+    branches:
+      - develop
+  workflow_dispatch:
+
+jobs:
+  build-and-release:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: "macos-latest"
+            os: "macOS (Apple Silicon)"
+            args: "--target aarch64-apple-darwin"
+          - platform: "macos-latest"
+            os: "macOS (Intel)"
+            args: "--target x86_64-apple-darwin"
+          - platform: "ubuntu-22.04"
+            os: "Linux"
+            args: ""
+          - platform: "windows-latest"
+            os: "Windows"
+            args: ""
+    runs-on: ${{ matrix.platform }}
+    name: Build (${{ matrix.os }})
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Install System Dependencies (Linux only)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      - name: Install Node.js dependencies
+        run: npm install
+
+      - name: Build & Publish Tauri Desktop Bundle
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name || 'v1.2.2-draft' }}
+          releaseName: "DonTesta FatturaPA ${{ github.ref_name || 'v1.2.2-draft' }}"
+          releaseBody: |
+            ## DonTesta FatturaPA Desktop Release
+
+            Disponibile per Windows, Linux e macOS (Apple Silicon e Intel).
+
+            ### Novità in questa versione:
+            - **DonTesta FatturaPA Brand**: Rebrand completo dell'interfaccia utente.
+            - **Multi-Platform Desktop App**: Distribuzione per Windows, Linux e macOS via Tauri.
+            - **Visualizzatore XML (FatturaPA)**: Rendering ad alta fedeltà delle fatture elettroniche.
+            - **Estrazione Dati Firma**: Estrazione dei metadati certificato CAdES/eIDAS dal payload PKCS#7.
+            - **Pipeline CI/CD**: Build e rilascio automatici tramite GitHub Actions.
+
+            Consultare il file CHANGELOG.md per l'elenco completo dei cambiamenti.
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}
