@@ -35,6 +35,7 @@ import Sidebar from "./components/Sidebar";
 import InvoiceList from "./components/InvoiceList";
 import InvoiceViewer from "./components/InvoiceViewer";
 import AnalyticsDashboard from "./components/AnalyticsDashboard";
+import DatabaseStatus from "./components/DatabaseStatus";
 import { parseFatturaXML, validateFatturaXML, extractXmlFromP7m, decodeXmlBytes } from "./utils/parser";
 import { loadInvoicesFromDB, saveInvoicesToDB, clearInvoicesDB, migrateFromLocalStorage } from "./utils/db";
 import { FatturaElettronica } from "./types";
@@ -1186,6 +1187,9 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* DATABASE STATUS FOOTER */}
+      <DatabaseStatus />
     </div>
   );
 }
