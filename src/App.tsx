@@ -827,7 +827,7 @@ export default function App() {
               </span>
             </div>
             <p className="text-[10px] text-slate-400 font-medium truncate">
-              Fatturazione Elettronica Open-Source • Ispirato dal Blog <a href="https://www.dontesta.it" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">dontesta.it</a>
+              Fatturazione Elettronica Open-Source • Supportato dal Blog <a href="https://www.dontesta.it" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">dontesta.it</a>
             </p>
           </div>
 
@@ -1126,7 +1126,7 @@ export default function App() {
 
               {/* Description */}
               <p className="text-slate-600 leading-relaxed text-xs">
-                Visualizzatore open-source e cross-platform per fatture elettroniche XML (FatturaPA), ispirato e supportato dal Blog di Antonio Musarra (<a href="https://www.dontesta.it" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline font-semibold">dontesta.it</a>).
+                Visualizzatore open-source e cross-platform per fatture elettroniche XML (FatturaPA), supportato dal Blog di Antonio Musarra (<a href="https://www.dontesta.it" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline font-semibold">dontesta.it</a>).
               </p>
 
               {/* Links List */}
