@@ -23,6 +23,7 @@ import {
   Download
 } from "lucide-react";
 import { FatturaElettronica, TIPO_DOCUMENTO_MAP, Allegato } from "../types";
+import { sanitizeFilename, safeDownload, sanitizeDataUrl, isValidBase64, sanitizeBlobUrl } from "../utils/sanitize";
 
 interface InvoiceListProps {
   invoices: FatturaElettronica[];
@@ -75,6 +76,14 @@ export default function InvoiceList({
     if (ext === 'pdf') {
       try {
         const cleanBase64 = activeAtt.attachmentData.replace(/\s/g, '');
+        
+        // Validate base64 before processing
+        if (!isValidBase64(cleanBase64)) {
+          console.error("Invalid base64 data for PDF preview");
+          setPreviewIframeUrl(null);
+          return;
+        }
+        
         const byteCharacters = atob(cleanBase64);
         const byteNumbers = new Array(byteCharacters.length);
         for (let i = 0; i < byteCharacters.length; i++) {
@@ -83,7 +92,15 @@ export default function InvoiceList({
         const byteArray = new Uint8Array(byteNumbers);
         const blob = new Blob([byteArray], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
-        setPreviewIframeUrl(url);
+        
+        // Sanitize the blob URL before setting it
+        const sanitizedUrl = sanitizeBlobUrl(url);
+        if (sanitizedUrl) {
+          setPreviewIframeUrl(sanitizedUrl);
+        } else {
+          setPreviewIframeUrl(null);
+        }
+        
         return () => URL.revokeObjectURL(url);
       } catch (err) {
         console.error("Errore decodifica PDF per preview:", err);
@@ -122,15 +139,30 @@ export default function InvoiceList({
     let successCount = 0;
     allegati.forEach((att) => {
       try {
-        const mimeType = getMimeType(att.formato, att.nome);
-        const blob = base64ToBlob(att.attachmentData, mimeType);
+        // Validate base64 data BEFORE creating blob
+        const cleanBase64 = att.attachmentData.replace(/\s/g, '');
+        if (!isValidBase64(cleanBase64)) {
+          console.error("Invalid base64 data for attachment:", att.nome);
+          return;
+        }
+        
+        // Sanitize filename before using it
+        const sanitizedFilename = sanitizeFilename(att.nome);
+        const mimeType = getMimeType(att.formato, sanitizedFilename);
+        const blob = base64ToBlob(cleanBase64, mimeType);
         const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = att.nome;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        
+        // Sanitize URL before using it
+        const sanitizedUrl = sanitizeBlobUrl(url);
+        if (!sanitizedUrl) {
+          console.error("Invalid blob URL for attachment:", sanitizedFilename);
+          URL.revokeObjectURL(url);
+          return;
+        }
+        
+        // Both parameters are sanitized before passing to safeDownload
+        safeDownload(sanitizedUrl, sanitizedFilename);
+        
         URL.revokeObjectURL(url);
         successCount++;
       } catch (err) {
@@ -140,7 +172,8 @@ export default function InvoiceList({
 
     if (successCount > 0 && onShowNotification) {
       if (successCount === 1) {
-        onShowNotification(`Allegato "${allegati[0].nome}" scaricato con successo.`, "success");
+        const sanitizedName = sanitizeFilename(allegati[0].nome);
+        onShowNotification(`Allegato "${sanitizedName}" scaricato con successo.`, "success");
       } else {
         onShowNotification(`${successCount} allegati scaricati con successo.`, "success");
       }
@@ -235,12 +268,22 @@ export default function InvoiceList({
 
     const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `elenco_fatture_${new Date().toISOString().split("T")[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    
+    // Sanitize URL before using it
+    const sanitizedUrl = sanitizeBlobUrl(url);
+    if (!sanitizedUrl) {
+      console.error("Invalid blob URL for CSV export");
+      URL.revokeObjectURL(url);
+      return;
+    }
+    
+    // Sanitize filename before using it (even though it's generated, be explicit for static analysis)
+    const filename = sanitizeFilename(`elenco_fatture_${new Date().toISOString().split("T")[0]}.csv`);
+    
+    // Both parameters are sanitized before passing to safeDownload
+    safeDownload(sanitizedUrl, filename);
+    
+    URL.revokeObjectURL(url);
   };
 
   // Helper to format Date from YYYY-MM-DD to DD/MM/YYYY
@@ -682,6 +725,7 @@ export default function InvoiceList({
                   <div className="text-[10px] uppercase font-bold text-slate-400 p-2 tracking-wider">Elenco file ({previewModalData.allegati.length})</div>
                   {previewModalData.allegati.map((att, idx) => {
                     const isActive = idx === activePreviewIndex;
+                    const sanitizedAttName = sanitizeFilename(att.nome);
                     return (
                       <button
                         key={idx}
@@ -693,7 +737,7 @@ export default function InvoiceList({
                         }`}
                       >
                         <FileText className={`h-4 w-4 shrink-0 ${isActive ? 'text-blue-600' : 'text-slate-400'}`} />
-                        <span className="truncate flex-1" title={att.nome}>{att.nome}</span>
+                        <span className="truncate flex-1" title={sanitizedAttName}>{sanitizedAttName}</span>
                       </button>
                     );
                   })}
@@ -708,6 +752,13 @@ export default function InvoiceList({
 
                   const ext = (activeAtt.formato || activeAtt.nome.split('.').pop() || '').toLowerCase();
                   const cleanBase64 = activeAtt.attachmentData.replace(/\s/g, '');
+                  
+                  // Validate base64 data for security
+                  const isBase64Valid = isValidBase64(cleanBase64);
+                  
+                  // Sanitize filename and description for use in attributes
+                  const sanitizedFilename = sanitizeFilename(activeAtt.nome);
+                  const sanitizedDescrizione = activeAtt.descrizione ? sanitizeFilename(activeAtt.descrizione) : '';
 
                   return (
                     <React.Fragment>
@@ -715,15 +766,15 @@ export default function InvoiceList({
                       <div className="bg-white border-b border-slate-200 px-4 py-2.5 flex items-center justify-between gap-4 shrink-0">
                         <div className="min-w-0">
                           <div className="font-mono text-[10px] font-bold text-slate-400 truncate uppercase">File visualizzato</div>
-                          <div className="font-bold text-slate-800 text-xs truncate mt-0.5" title={activeAtt.nome}>
-                            {activeAtt.nome}
+                          <div className="font-bold text-slate-800 text-xs truncate mt-0.5" title={sanitizedFilename}>
+                            {sanitizedFilename}
                           </div>
                         </div>
 
                         <div className="flex items-center gap-2 shrink-0">
-                          {activeAtt.descrizione && (
-                            <span className="hidden md:inline text-[10px] text-slate-500 italic truncate max-w-xs" title={activeAtt.descrizione}>
-                              {activeAtt.descrizione}
+                          {sanitizedDescrizione && (
+                            <span className="hidden md:inline text-[10px] text-slate-500 italic truncate max-w-xs" title={sanitizedDescrizione}>
+                              {sanitizedDescrizione}
                             </span>
                           )}
                           <button
@@ -738,14 +789,29 @@ export default function InvoiceList({
                       {/* Actual Content Preview Box */}
                       <div className="flex-1 min-h-0 overflow-auto p-4 flex items-center justify-center">
                         {ext === 'pdf' && previewIframeUrl ? (
-                          <iframe
-                            src={previewIframeUrl}
-                            className="w-full h-full border border-slate-200 rounded-sm bg-white"
-                            title={activeAtt.nome}
-                          />
+                          (() => {
+                            // Re-sanitize iframe URL for explicit taint analysis
+                            const sanitizedIframeUrl = sanitizeBlobUrl(previewIframeUrl);
+                            if (!sanitizedIframeUrl) {
+                              return (
+                                <div className="flex flex-col items-center justify-center text-center p-8 bg-white border border-slate-200 rounded-lg max-w-md shadow-2xs gap-3">
+                                  <AlertCircle className="h-12 w-12 text-red-400" />
+                                  <p className="text-xs text-slate-500">Impossibile visualizzare il PDF: URL non valido.</p>
+                                </div>
+                              );
+                            }
+                            return (
+                              <iframe
+                                src={sanitizedIframeUrl}
+                                className="w-full h-full border border-slate-200 rounded-sm bg-white"
+                                title={sanitizedFilename}
+                              />
+                            );
+                          })()
                         ) : ext === 'txt' ? (
                           <div className="w-full h-full bg-white border border-slate-200 rounded-sm p-4 overflow-auto text-xs leading-relaxed font-mono whitespace-pre-wrap text-slate-800 select-text">
                             {(() => {
+                              if (!isBase64Valid) return "Dati non validi per la visualizzazione.";
                               try {
                                 const bytes = new Uint8Array(atob(cleanBase64).split("").map(c => c.charCodeAt(0)));
                                 return new TextDecoder("utf-8").decode(bytes);
@@ -755,14 +821,31 @@ export default function InvoiceList({
                             })()}
                           </div>
                         ) : ['png', 'jpg', 'jpeg', 'gif'].includes(ext) ? (
-                          <div className="max-w-full max-h-full overflow-auto flex items-center justify-center bg-white border border-slate-200 rounded-sm p-2 shadow-2xs">
-                            <img
-                              src={`data:image/${ext === 'jpg' ? 'jpeg' : ext};base64,${cleanBase64}`}
-                              alt={activeAtt.nome}
-                              className="max-w-full max-h-[60vh] object-contain"
-                              referrerPolicy="no-referrer"
-                            />
-                          </div>
+                          (() => {
+                            // Sanitize data URL for images
+                            const dataUrl = `data:image/${ext === 'jpg' ? 'jpeg' : ext};base64,${cleanBase64}`;
+                            const sanitizedDataUrl = sanitizeDataUrl(dataUrl);
+                            
+                            if (!sanitizedDataUrl) {
+                              return (
+                                <div className="flex flex-col items-center justify-center text-center p-8 bg-white border border-slate-200 rounded-lg max-w-md shadow-2xs gap-3">
+                                  <AlertCircle className="h-12 w-12 text-red-400" />
+                                  <p className="text-xs text-slate-500">Impossibile visualizzare l'immagine: dati non validi.</p>
+                                </div>
+                              );
+                            }
+                            
+                            return (
+                              <div className="max-w-full max-h-full overflow-auto flex items-center justify-center bg-white border border-slate-200 rounded-sm p-2 shadow-2xs">
+                                <img
+                                  src={sanitizedDataUrl}
+                                  alt={sanitizedFilename}
+                                  className="max-w-full max-h-[60vh] object-contain"
+                                  referrerPolicy="no-referrer"
+                                />
+                              </div>
+                            );
+                          })()
                         ) : (
                           <div className="flex flex-col items-center justify-center text-center p-8 bg-white border border-slate-200 rounded-lg max-w-md shadow-2xs gap-3">
                             <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center text-slate-400">
