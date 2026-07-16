@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DonTesta FatturaPA - Loading</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .logo-container {
+            margin-bottom: 40px;
+            animation: fadeInScale 0.6s ease-out;
+        }
+
+        .logo {
+            width: 120px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .logo svg {
+            width: 70px;
+            height: 70px;
+            fill: white;
+        }
+
+        .brand {
+            text-align: center;
+            margin-bottom: 50px;
+            animation: fadeIn 0.8s ease-out 0.2s backwards;
+        }
+
+        .brand h1 {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .brand .highlight {
+            color: #60A5FA;
+            font-weight: 800;
+        }
+
+        .brand p {
+            font-size: 14px;
+            color: #94A3B8;
+            font-weight: 500;
+        }
+
+        .version {
+            position: absolute;
+            bottom: 30px;
+            font-size: 12px;
+            color: #64748B;
+            animation: fadeIn 1s ease-out 0.4s backwards;
+        }
+
+        .loading {
+            position: absolute;
+            bottom: 80px;
+            animation: fadeIn 1s ease-out 0.6s backwards;
+        }
+
+        .loading-bar {
+            width: 200px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .loading-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #60A5FA 0%, #3B82F6 100%);
+            border-radius: 2px;
+            animation: loading 1.5s ease-in-out infinite;
+        }
+
+        .loading-text {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 12px;
+            color: #94A3B8;
+            font-weight: 500;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes loading {
+            0% {
+                width: 0%;
+                margin-left: 0%;
+            }
+            50% {
+                width: 50%;
+                margin-left: 25%;
+            }
+            100% {
+                width: 0%;
+                margin-left: 100%;
+            }
+        }
+
+        .footer {
+            position: absolute;
+            bottom: 10px;
+            right: 15px;
+            font-size: 10px;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .footer a {
+            color: #60A5FA;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="logo-container">
+        <div class="logo">
+            <!-- Invoice icon -->
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
+                <path d="M14 2v6h6"/>
+                <path d="M8 13h8"/>
+                <path d="M8 17h8"/>
+                <path d="M8 9h2"/>
+            </svg>
+        </div>
+    </div>
+
+    <div class="brand">
+        <h1>DonTesta <span class="highlight">FatturaPA</span></h1>
+        <p>Fatturazione Elettronica Open-Source</p>
+    </div>
+
+    <div class="loading">
+        <div class="loading-bar">
+            <div class="loading-progress"></div>
+        </div>
+        <div class="loading-text">Caricamento in corso...</div>
+    </div>
+
+    <div class="version">v1.0.0</div>
+
+    <div class="footer">
+        <span>©2026</span>
+        <a href="https://www.dontesta.it" target="_blank">dontesta.it</a>
+    </div>
+
+    <script>
+        // Close splash screen after main window is ready
+        window.addEventListener('DOMContentLoaded', () => {
+            // Minimum splash time: 1.5 seconds
+            setTimeout(() => {
+                // Tauri will handle closing this window from Rust side
+                console.log('Splash screen ready to be closed');
+            }, 1500);
+        });
+    </script>
+</body>
+</html>

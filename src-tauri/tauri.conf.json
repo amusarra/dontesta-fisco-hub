@@ -12,10 +12,27 @@
   "app": {
     "windows": [
       {
+        "label": "splashscreen",
+        "title": "DonTesta FatturaPA",
+        "width": 800,
+        "height": 600,
+        "resizable": false,
+        "fullscreen": false,
+        "decorations": false,
+        "alwaysOnTop": true,
+        "center": true,
+        "skipTaskbar": true,
+        "url": "splashscreen.html"
+      },
+      {
+        "label": "main",
         "title": "DonTesta FatturaPA",
         "width": 1024,
         "height": 768,
-        "resizable": true
+        "resizable": true,
+        "center": true,
+        "visible": false,
+        "maximized": true
       }
     ]
   },
