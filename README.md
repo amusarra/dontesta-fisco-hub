@@ -1,8 +1,9 @@
 # DonTesta FatturaPA 🚀
 
-> **Visualizzatore open-source e cross-platform per fatture elettroniche XML (FatturaPA), ispirato e supportato dal Blog di Antonio Musarra ([dontesta.it](https://www.dontesta.it)).**
+> **Visualizzatore open-source e cross-platform per fatture elettroniche XML (FatturaPA), supportato dal Blog di Antonio Musarra ([dontesta.it](https://www.dontesta.it)).**
 
-DonTesta FatturaPA consente di importare, organizzare e visualizzare le fatture elettroniche in modo semplice, veloce ed efficiente, direttamente nel tuo browser o come applicazione desktop nativa.
+DonTesta FatturaPA consente di importare, organizzare e visualizzare le fatture elettroniche in modo semplice, veloce ed 
+efficiente, direttamente nel tuo browser o come applicazione desktop nativa. **Non è un software di contabilità**.
 
 ---
 
@@ -13,7 +14,7 @@ DonTesta FatturaPA consente di importare, organizzare e visualizzare le fatture 
 - 💻 **Desktop Ready (Tauri v2)**: Applicazione nativa ultraleggera e sicura per Windows, macOS (Apple Silicon **e** Intel) e Linux.
 - 🔒 **Sicurezza Client-Side**: Tutti i dati rimangono sul tuo dispositivo. Nessuna informazione sensibile viene inviata a server esterni.
 - 📊 **Dashboard Analitica**: Grafici di distribuzione e filtri avanzati per anno, mese, fornitore e cliente.
-- 🖨️ **Stampa e Download**: Stampa le fatture con foglio di stile ministeriale o scarica l'XML originale decodificato.
+- 🖨️ **Stampa e Download**: Stampa le fatture o scarica l'XML originale decodificato.
 
 ---
 
@@ -106,7 +107,7 @@ Tutti gli artefatti vengono raccolti e allegati a una **bozza di release GitHub*
 3. Vai nella scheda **Releases** del repository, completa la bozza generata e pubblicala.
 
 ### 2. Pubblicazione di GitHub Pages (`.github/workflows/pages.yml`)
-Compila e pubblica automaticamente la landing page in `/docs` ad ogni push sul ramo `main`.
+Compila e pubblica automaticamente la landing page in `/docs` a ogni push sul ramo `main`.
 
 La pagina è accessibile all'indirizzo `https://<tuo-utente>.github.io/<nome-repo>/`.
 
@@ -115,4 +116,4 @@ La pagina è accessibile all'indirizzo `https://<tuo-utente>.github.io/<nome-rep
 ## 📄 Licenza
 
 Questo progetto è rilasciato sotto licenza MIT. Consulta il file [LICENSE](LICENSE) per i dettagli.
-Ispirato e supportato dal blog di Antonio Musarra ([dontesta.it](https://www.dontesta.it)).
+Il progetto è supportato dal blog di Antonio Musarra ([dontesta.it](https://www.dontesta.it)).

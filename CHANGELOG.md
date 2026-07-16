@@ -12,9 +12,9 @@ e questo progetto aderisce a [Semantic Versioning](https://semver.org/lang/it/).
 Prima release pubblica di **DonTesta FatturaPA**.
 
 ### Aggiunto
-- **Visualizzatore FatturaPA (XML)**: Rendering ad alta fedeltà dei documenti XML standard (FPA12, FPR12) con supporto a tutte le sezioni ministeriali (Cedente/Prestatore, Cessionario/Committente, Dettaglio Linee, Aliquote IVA, Dati di Pagamento, Allegati).
-- **Supporto file firmati CAdES (`.xml.p7m`)**: Estrazione affidabile del payload XML dal contenuto PKCS#7 tramite la libreria open-source **node-forge**.
-- **Estrazione metadati firma digitale eIDAS/CAdES**: Lettura dei dati reali del certificato X.509 incluso nel file `.p7m`:
+- **Visualizzatore FatturaPA (XML)**: Rendering dei documenti XML standard (FPA12, FPR12) con supporto a tutte le sezioni ministeriali (Cedente/Prestatore, Cessionario/Committente, Dettaglio Linee, Aliquote IVA, Dati di Pagamento, Allegati).
+- **Supporto file firmati CAdES (`.xml.p7m`)**: Estrazione del payload XML dal contenuto PKCS#7 tramite la libreria open-source **node-forge**.
+- **Estrazione metadati firma digitale CAdES**: Lettura dei dati reali del certificato X.509 incluso nel file `.p7m`:
   - Firmatario (Common Name), Ente emittente (Issuer DN), Numero seriale.
   - Date di validità (`notBefore` / `notAfter`) con indicazione automatica dello stato `VALIDA` / `SCADUTA`.
   - Key Usage (digitalSignature, nonRepudiation, …).
@@ -32,7 +32,7 @@ Prima release pubblica di **DonTesta FatturaPA**.
 - **Download XML e stampa PDF**: Esportazione dell'XML decodificato e stampa via browser con foglio di stile ottimizzato.
 - **Integrazione Desktop (Tauri v2)**: Applicazione nativa per Windows (`.msi`, `.exe`), Linux (`.deb`, `.AppImage`) e macOS (`.dmg`) sia per architettura Apple Silicon (`aarch64`) sia Intel (`x86_64`).
 - **Pipeline Release multi-piattaforma (GitHub Actions)**: Build parallela su `macos-latest`, `ubuntu-22.04` e `windows-latest` con pubblicazione automatica delle release draft tramite `tauri-apps/tauri-action@v1`.
-- **Pipeline GitHub Pages**: Deploy automatico della landing page in `/docs` ad ogni push sul ramo principale.
+- **Pipeline GitHub Pages**: Deploy automatico della landing page in `/docs` a ogni push sul ramo principale.
 - **Sito di presentazione GitHub Pages**: Pagina promozionale e descrittiva con istruzioni di download e panoramica delle funzionalità.
 - **Licenza MIT**: Rilascio open-source con licenza MIT.
 
