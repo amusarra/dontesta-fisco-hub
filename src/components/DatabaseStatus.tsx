@@ -115,64 +115,6 @@ export default function DatabaseStatus() {
                   <span className="font-bold text-slate-900">{dbInfo.estimatedSize}</span>
                 </div>
 
-                <div className="pt-2 border-t border-slate-100">
-                  <div className="flex justify-between items-start mb-1">
-                    <span className="font-semibold text-slate-600">Storage:</span>
-                    <span className="font-bold text-slate-900">{dbInfo.storageType}</span>
-                  </div>
-                  <div className="flex justify-between items-start">
-                    <span className="font-semibold text-slate-600">Browser:</span>
-                    <span className="font-bold text-slate-900">{dbInfo.browserInfo}</span>
-                  </div>
-                </div>
-
-                {/* Location - honest approach */}
-                <div className="pt-2 border-t border-slate-100">
-                  <div className="bg-blue-50 border border-blue-200 rounded px-2.5 py-2">
-                    <div className="flex items-start gap-2">
-                      <MapPin className="h-3.5 w-3.5 text-blue-600 shrink-0 mt-0.5" />
-                      <div className="flex-1">
-                        <div className="font-semibold text-blue-900 text-[11px] mb-1">
-                          Dove sono salvati i dati?
-                        </div>
-                        <p className="text-[10px] text-blue-700 leading-relaxed mb-2">
-                          Il browser non espone il percorso fisico per motivi di sicurezza. 
-                          I dati sono salvati nel profilo del browser.
-                        </p>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowInstructions(!showInstructions);
-                          }}
-                          className="flex items-center gap-1 text-[10px] font-bold text-blue-600 hover:text-blue-700 cursor-pointer"
-                        >
-                          <HelpCircle className="h-3 w-3" />
-                          {showInstructions ? 'Nascondi istruzioni' : 'Mostra come trovare il percorso'}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Instructions panel */}
-                  {showInstructions && (() => {
-                    const instructions = getLocationInstructions();
-                    return (
-                      <div className="mt-2 bg-slate-50 border border-slate-200 rounded px-2.5 py-2">
-                        <div className="font-semibold text-slate-700 text-[10px] mb-1.5">
-                          {instructions.title}
-                        </div>
-                        <div className="space-y-0.5">
-                          {instructions.steps.map((step, i) => (
-                            <div key={i} className={`text-[9px] ${step === '' ? 'h-1' : 'text-slate-600'}`}>
-                              {step}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-
                 {dbInfo.error && (
                   <div className="bg-amber-50 border border-amber-200 rounded px-2 py-1.5 mt-2">
                     <div className="flex items-start gap-1.5">

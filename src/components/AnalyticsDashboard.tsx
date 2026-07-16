@@ -33,8 +33,8 @@ import html2canvas from "html2canvas-pro";
 
 interface AnalyticsDashboardProps {
   invoices: FatturaElettronica[];
-  selectedYear: string;
-  selectedMonth: string | null;
+  selectedYears: string[];
+  selectedMonths: string[];
   onClose: () => void;
   onShowNotification?: (message: string, type: "success" | "error" | "info") => void;
 }
@@ -48,8 +48,8 @@ const MONTH_NAMES = [
 
 export default function AnalyticsDashboard({
   invoices,
-  selectedYear,
-  selectedMonth,
+  selectedYears,
+  selectedMonths,
   onClose,
   onShowNotification
 }: AnalyticsDashboardProps) {
@@ -151,19 +151,19 @@ export default function AnalyticsDashboard({
   // --------------------------------------------------------
   const filteredData = useMemo(() => {
     return invoices.filter(inv => {
-      // Year filter
-      if (selectedYear !== "TUTTI GLI ANNI") {
+      // Year filter (multi-select)
+      if (selectedYears.length > 0) {
         const year = inv.datiGenerali.data.split("-")[0];
-        if (year !== selectedYear) return false;
+        if (!selectedYears.includes(year)) return false;
       }
-      // Month filter
-      if (selectedMonth !== null) {
+      // Month filter (multi-select)
+      if (selectedMonths.length > 0) {
         const month = inv.datiGenerali.data.split("-")[1];
-        if (month !== selectedMonth) return false;
+        if (!selectedMonths.includes(month)) return false;
       }
       return true;
     });
-  }, [invoices, selectedYear, selectedMonth]);
+  }, [invoices, selectedYears, selectedMonths]);
 
   // KPIs
   const kpis = useMemo(() => {
@@ -189,8 +189,12 @@ export default function AnalyticsDashboard({
   // CHART 1: Trend over Time (Monthly, Annual, or Daily)
   // --------------------------------------------------------
   const trendData = useMemo(() => {
-    if (selectedYear === "TUTTI GLI ANNI") {
-      // Group by Year
+    // Decide granularity based on what's selected
+    const hasYears = selectedYears.length > 0;
+    const hasMonths = selectedMonths.length > 0;
+    
+    if (!hasYears && !hasMonths) {
+      // No filter = Group by Year
       const groups: Record<string, { period: string; imponibile: number; imposta: number; totale: number }> = {};
       filteredData.forEach(inv => {
         const year = inv.datiGenerali.data.split("-")[0] || "N.D.";
@@ -202,8 +206,8 @@ export default function AnalyticsDashboard({
         groups[year].totale += inv.totaleDocumento || 0;
       });
       return Object.values(groups).sort((a, b) => a.period.localeCompare(b.period));
-    } else if (selectedMonth === null) {
-      // Group by Month for selected year
+    } else if (hasYears && !hasMonths) {
+      // Years selected, no months = Group by Month
       const monthlyArray = Array.from({ length: 12 }, (_, i) => {
         const monthNum = String(i + 1).padStart(2, "0");
         return {
@@ -226,8 +230,11 @@ export default function AnalyticsDashboard({
       });
       return monthlyArray;
     } else {
-      // Group by Day for selected month and year
-      const daysInMonth = new Date(parseInt(selectedYear, 10), parseInt(selectedMonth, 10), 0).getDate();
+      // Months selected = Group by Day
+      // For simplicity, use first selected year if multiple
+      const yearToUse = selectedYears.length > 0 ? selectedYears[0] : new Date().getFullYear().toString();
+      const monthToUse = selectedMonths[0];
+      const daysInMonth = new Date(parseInt(yearToUse, 10), parseInt(monthToUse, 10), 0).getDate();
       const dailyMap: Record<string, { period: string; imponibile: number; imposta: number; totale: number }> = {};
       
       for (let d = 1; d <= daysInMonth; d++) {
@@ -252,7 +259,7 @@ export default function AnalyticsDashboard({
           ...dailyMap[day]
         }));
     }
-  }, [filteredData, selectedYear, selectedMonth]);
+  }, [filteredData, selectedYears, selectedMonths]);
 
   // --------------------------------------------------------
   // CHART 2: Top Clients (Cessionari)
@@ -363,8 +370,16 @@ export default function AnalyticsDashboard({
           </h2>
           <p className="text-xs text-slate-500 font-medium">
             Analisi dettagliata del fatturato basata sul database caricato. Filtri attivi: 
-            <strong className="text-slate-800 ml-1">Anno: {selectedYear}</strong>
-            {selectedMonth && <strong className="text-slate-800 ml-1">• Mese: {MONTH_NAMES[parseInt(selectedMonth, 10) - 1]}</strong>}
+            <strong className="text-slate-800 ml-1">
+              Anno: {selectedYears.length === 0 ? "TUTTI" : selectedYears.length === 1 ? selectedYears[0] : `${selectedYears.length} anni`}
+            </strong>
+            {selectedMonths.length > 0 && (
+              <strong className="text-slate-800 ml-1">
+                • Mese: {selectedMonths.length === 1 
+                  ? MONTH_NAMES[parseInt(selectedMonths[0], 10) - 1] 
+                  : `${selectedMonths.length} mesi`}
+              </strong>
+            )}
           </p>
         </div>
         
@@ -388,7 +403,7 @@ export default function AnalyticsDashboard({
             
             downloadCSV(
               exportRows,
-              `elenco_fatture_${selectedYear}_${selectedMonth || "tutti"}`,
+              `elenco_fatture_${selectedYears.join('-') || 'tutti'}_${selectedMonths.join('-') || "tutti"}`,
               ["ID", "NomeFile", "Numero", "Data", "TipoDocumento", "Fornitore", "FornitorePIVA", "Cliente", "ClientePIVA", "Imponibile", "Imposta", "TotaleDocumento"],
               {
                 ID: "ID Interno",
@@ -480,7 +495,7 @@ export default function AnalyticsDashboard({
             </div>
             <div className="flex items-center gap-1.5">
               <button
-                onClick={() => downloadCSV(trendData, `trend_fatturato_${selectedYear}`, ["period", "imponibile", "imposta", "totale"], {
+                onClick={() => downloadCSV(trendData, `trend_fatturato_${selectedYears.join('-') || 'tutti'}`, ["period", "imponibile", "imposta", "totale"], {
                   period: "Periodo",
                   imponibile: "Imponibile (€)",
                   imposta: "IVA (€)",
@@ -492,7 +507,7 @@ export default function AnalyticsDashboard({
                 <Download className="h-4 w-4" />
               </button>
               <button
-                onClick={() => downloadCardAsImage("chart-trend-card", `andamento_fatturato_${selectedYear}`)}
+                onClick={() => downloadCardAsImage("chart-trend-card", `andamento_fatturato_${selectedYears.join('-') || 'tutti'}`)}
                 className="p-1 rounded hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
                 title="Esporta grafico come immagine"
               >

@@ -36,6 +36,7 @@ import InvoiceList from "./components/InvoiceList";
 import InvoiceViewer from "./components/InvoiceViewer";
 import AnalyticsDashboard from "./components/AnalyticsDashboard";
 import DatabaseStatus from "./components/DatabaseStatus";
+import MultiSelect from "./components/MultiSelect";
 import { parseFatturaXML, validateFatturaXML, extractXmlFromP7m, decodeXmlBytes } from "./utils/parser";
 import { loadInvoicesFromDB, saveInvoicesToDB, clearInvoicesDB, migrateFromLocalStorage } from "./utils/db";
 import { FatturaElettronica } from "./types";
@@ -318,9 +319,9 @@ export default function App() {
     });
   };
 
-  // Filters State
-  const [selectedYear, setSelectedYear] = useState<string>("TUTTI GLI ANNI");
-  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+  // Filters State - Multi-select arrays
+  const [selectedYears, setSelectedYears] = useState<string[]>([]);
+  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
   const [selectedSupplier, setSelectedSupplier] = useState<string | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
 
@@ -484,8 +485,8 @@ export default function App() {
         );
         
         // Reset active filters
-        setSelectedYear("TUTTI GLI ANNI");
-        setSelectedMonth(null);
+        setSelectedYears([]);
+        setSelectedMonths([]);
         setSelectedSupplier(null);
         setSelectedCustomer(null);
 
@@ -547,16 +548,16 @@ export default function App() {
   // Core filtering logic for middle list & left sidebar highlights
   const filteredInvoices = useMemo(() => {
     return invoices.filter((inv) => {
-      // 1. Year Filter
-      if (selectedYear !== "TUTTI GLI ANNI") {
+      // 1. Year Filter (multi-select)
+      if (selectedYears.length > 0) {
         const invYear = inv.datiGenerali.data.split("-")[0];
-        if (invYear !== selectedYear) return false;
+        if (!selectedYears.includes(invYear)) return false;
       }
 
-      // 2. Month Filter
-      if (selectedMonth !== null) {
+      // 2. Month Filter (multi-select)
+      if (selectedMonths.length > 0) {
         const invMonth = inv.datiGenerali.data.split("-")[1];
-        if (invMonth !== selectedMonth) return false;
+        if (!selectedMonths.includes(invMonth)) return false;
       }
 
       // 3. Supplier (Cedente) Filter
@@ -573,7 +574,7 @@ export default function App() {
 
       return true;
     });
-  }, [invoices, selectedYear, selectedMonth, selectedSupplier, selectedCustomer]);
+  }, [invoices, selectedYears, selectedMonths, selectedSupplier, selectedCustomer]);
 
   // Handle smart auto-selection when filters change
   useEffect(() => {
@@ -878,42 +879,31 @@ export default function App() {
 
         {/* YEAR & MONTH SELECTOR FILTER - ALWAYS VISIBLE */}
         <div className="flex flex-col gap-2.5 md:flex-row md:items-center shrink-0 min-w-0 max-w-full">
-          {/* Year Dropdown Select block */}
+          {/* Year Multi-Select */}
           <div className="flex items-center gap-1.5 bg-slate-900/50 p-1 rounded border border-slate-800 shrink-0 select-none">
             <span className="text-[10px] text-slate-400 font-bold uppercase pl-1.5 pr-0.5 hidden sm:inline">Anno:</span>
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
-              className="bg-slate-800 text-slate-100 text-[11px] font-extrabold rounded px-2.5 py-1.5 border border-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer hover:bg-slate-700 hover:text-white transition-colors"
-              id="year-select-dropdown"
-            >
-              {yearsList.map((year) => (
-                <option key={year} value={year} className="bg-slate-950 text-slate-100 font-bold">
-                  {year}
-                </option>
-              ))}
-            </select>
+            <MultiSelect
+              options={yearsList.filter(y => y !== "TUTTI GLI ANNI").map(year => ({ value: year, label: year }))}
+              selectedValues={selectedYears}
+              onChange={setSelectedYears}
+              allLabel="TUTTI GLI ANNI"
+              id="year-multi-select"
+            />
           </div>
 
-          {/* MONTH SELECTOR FILTER */}
-          <div className="flex items-center gap-1 bg-slate-900/50 p-1 rounded border border-slate-800 max-w-full overflow-x-auto scrollbar-thin whitespace-nowrap">
-            {MONTHS.map((m) => {
-              const isSelected = selectedMonth === m.value;
-              return (
-                <button
-                  key={m.name}
-                  onClick={() => setSelectedMonth(m.value)}
-                  className={`text-[9px] font-bold tracking-tight px-2 py-1 rounded transition-all cursor-pointer whitespace-nowrap ${
-                    isSelected 
-                      ? "bg-blue-600 text-white shadow-sm font-extrabold" 
-                      : "text-slate-400 hover:text-white hover:bg-slate-800"
-                  }`}
-                  id={`month-pill-${m.name}`}
-                >
-                  {m.name}
-                </button>
-              );
-            })}
+          {/* Month Multi-Select */}
+          <div className="flex items-center gap-1.5 bg-slate-900/50 p-1 rounded border border-slate-800 shrink-0 select-none">
+            <span className="text-[10px] text-slate-400 font-bold uppercase pl-1.5 pr-0.5 hidden sm:inline">Mese:</span>
+            <MultiSelect
+              options={MONTHS.filter(m => m.value !== null).map(month => ({ 
+                value: month.value!, 
+                label: month.name 
+              }))}
+              selectedValues={selectedMonths}
+              onChange={setSelectedMonths}
+              allLabel="TUTTI I MESI"
+              id="month-multi-select"
+            />
           </div>
         </div>
       </header>
@@ -926,18 +916,25 @@ export default function App() {
             Filtri: 
           </div>
           <div className="flex flex-wrap gap-1.5 items-center">
-            <span className="bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded-sm font-semibold text-[10px]">Anno: {selectedYear}</span>
             <span className="bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded-sm font-semibold text-[10px]">
-              Mese: {selectedMonth ? MONTHS.find(m => m.value === selectedMonth)?.name : "TUTTI I MESI"}
+              Anno: {selectedYears.length === 0 ? "TUTTI GLI ANNI" : selectedYears.length === 1 ? selectedYears[0] : `${selectedYears.length} anni`}
+            </span>
+            <span className="bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded-sm font-semibold text-[10px]">
+              Mese: {selectedMonths.length === 0 
+                ? "TUTTI I MESI" 
+                : selectedMonths.length === 1 
+                  ? MONTHS.find(m => m.value === selectedMonths[0])?.name 
+                  : `${selectedMonths.length} mesi`
+              }
             </span>
             {selectedSupplier && <span className="bg-blue-50 text-blue-700 border border-blue-100 px-2 py-0.5 rounded-sm font-semibold text-[10px]">Cedente filtrato</span>}
             {selectedCustomer && <span className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded-sm font-semibold text-[10px]">Cessionario filtrato</span>}
             
-            {(selectedYear !== "TUTTI GLI ANNI" || selectedMonth !== null || selectedSupplier !== null || selectedCustomer !== null) && (
+            {(selectedYears.length > 0 || selectedMonths.length > 0 || selectedSupplier !== null || selectedCustomer !== null) && (
               <button 
                 onClick={() => {
-                  setSelectedYear("TUTTI GLI ANNI");
-                  setSelectedMonth(null);
+                  setSelectedYears([]);
+                  setSelectedMonths([]);
                   setSelectedSupplier(null);
                   setSelectedCustomer(null);
                   addToast("Filtri azzerati con successo", "info");
@@ -960,8 +957,8 @@ export default function App() {
       {activeView === "charts" ? (
         <AnalyticsDashboard
           invoices={invoices}
-          selectedYear={selectedYear}
-          selectedMonth={selectedMonth}
+          selectedYears={selectedYears}
+          selectedMonths={selectedMonths}
           onClose={() => setActiveView("list")}
           onShowNotification={addToast}
         />
