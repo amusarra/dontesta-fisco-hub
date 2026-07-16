@@ -6,6 +6,11 @@ DonTesta FatturaPA consente di importare, organizzare e visualizzare le fatture 
 efficiente, direttamente nel tuo browser o come applicazione desktop nativa. **Non è un software di contabilità**.
 
 ---
+[![Release & Desktop Build Pipeline](https://github.com/amusarra/fattura-pa-reader/actions/workflows/release.yml/badge.svg)](https://github.com/amusarra/fattura-pa-reader/actions/workflows/release.yml)
+
+Vai sulla [pagina delle release](https://github.com/amusarra/fattura-pa-reader/releases) per scaricare l'ultima versione 
+disponibile per il tuo sistema operativo (Windows, macOS o Linux).
+---
 
 ## 🌟 Caratteristiche Principali
 
