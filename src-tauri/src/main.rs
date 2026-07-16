@@ -14,11 +14,16 @@ fn close_splashscreen(app: &tauri::AppHandle) {
 
   if let Some(splash) = splashscreen_window {
     if let Some(main) = main_window {
-      // Show main window
+      // 1. Se non l'hai impostato nel tauri.conf.json, puoi forzare la massimizzazione qui:
+      // main.maximize().unwrap();
+
+      // 2. Mostra la finestra principale
       main.show().unwrap();
-      // Set focus to main window
+
+      // 3. Sposta il focus sulla finestra principale per renderla subito attiva
       main.set_focus().unwrap();
-      // Close splashscreen
+
+      // 4. Chiudi lo splashscreen solo DOPO che la main è visibile
       splash.close().unwrap();
     }
   }
