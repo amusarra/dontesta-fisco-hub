@@ -33,13 +33,13 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version: 24
+          package-manager-cache: false
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
@@ -80,8 +80,8 @@ jobs:
           # APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           # APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
-          tagName: ${{ github.ref_name || 'v1.2.2-draft' }}
-          releaseName: "DonTesta FatturaPA ${{ github.ref_name || 'v1.2.2-draft' }}"
+          tagName: ${{ github.ref_name || 'v1.0.0-draft' }}
+          releaseName: "DonTesta FatturaPA ${{ github.ref_name || 'v1.0.0-draft' }}"
           releaseBody: |
             ## DonTesta FatturaPA Desktop Release
 
