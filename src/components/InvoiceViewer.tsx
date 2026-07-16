@@ -27,6 +27,7 @@ import {
 import { FatturaElettronica, TIPO_DOCUMENTO_MAP, MODALITA_PAGAMENTO_MAP } from "../types";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas-pro";
+import DOMPurify from "dompurify";
 
 function highlightXmlString(xml: string): string {
   if (!xml) return "";
@@ -316,7 +317,7 @@ export default function InvoiceViewer({ invoice, onDownloadXml, onShowNotificati
     <title>Fattura Elettronica - ${invoice.fileName}</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com/3.4.17" integrity="sha384-igm5BeiBt36UU4gqwWS7imYmelpTsZlQ45FZf+XBn9MuJbn4nQr7yx1yFydocC/K" crossorigin="anonymous"></script>
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
       
@@ -865,7 +866,7 @@ export default function InvoiceViewer({ invoice, onDownloadXml, onShowNotificati
               </div>
               <pre 
                 className="whitespace-pre-wrap break-all select-text"
-                dangerouslySetInnerHTML={{ __html: highlightXmlString(invoice.rawXml || "") }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(highlightXmlString(invoice.rawXml || "")) }}
               />
             </div>
           ) : (
