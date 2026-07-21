@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Search, Building, Building2, User } from "lucide-react";
-import { FatturaElettronica } from "../types";
+import { Search, Building, Building2, User, ChevronRight, Eye } from "lucide-react";
+import { FatturaElettronica, Azienda } from "../types";
 
 interface SidebarProps {
   invoices: FatturaElettronica[];
@@ -8,6 +8,8 @@ interface SidebarProps {
   setSelectedSupplier: (supplier: string | null) => void;
   selectedCustomer: string | null;
   setSelectedCustomer: (customer: string | null) => void;
+  activeCompany?: Azienda | null;
+  onOpenCompanyManager?: () => void;
 }
 
 export default function Sidebar({
@@ -16,6 +18,8 @@ export default function Sidebar({
   setSelectedSupplier,
   selectedCustomer,
   setSelectedCustomer,
+  activeCompany,
+  onOpenCompanyManager,
 }: SidebarProps) {
   const [supplierSearch, setSupplierSearch] = useState("");
   const [customerSearch, setCustomerSearch] = useState("");
@@ -59,6 +63,49 @@ export default function Sidebar({
 
   return (
     <aside className="w-80 flex flex-col gap-6 bg-[#1E293B] border-r border-slate-800 p-5 h-full overflow-y-auto select-none" id="dontesta-sidebar">
+      {/* SECTION 0: Active Company Header */}
+      <div className="bg-slate-900/80 border border-slate-700/60 rounded-xl p-3.5 flex flex-col gap-2 shadow-xs">
+        <div className="text-[10px] font-bold tracking-widest text-slate-400 uppercase flex items-center justify-between">
+          <span>Azienda Selezionata</span>
+          {activeCompany?.isDummy ? (
+            <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-extrabold border border-amber-500/30">
+              GUEST
+            </span>
+          ) : (
+            <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-extrabold border border-emerald-500/30">
+              ATTIVA
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="p-2 rounded-lg bg-blue-600/30 border border-blue-500/30 text-blue-400 shrink-0">
+            {activeCompany?.isDummy ? <Eye className="h-4 w-4" /> : <Building2 className="h-4 w-4" />}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-xs font-bold text-slate-100 truncate" title={activeCompany?.denominazione || "Guest Mode"}>
+              {activeCompany?.denominazione || "Visualizzatore Guest"}
+            </div>
+            {activeCompany && !activeCompany.isDummy && (
+              <div className="text-[11px] font-mono text-slate-400 truncate">
+                P.IVA: {activeCompany.partitaIva}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {onOpenCompanyManager && (
+          <button
+            onClick={onOpenCompanyManager}
+            className="w-full mt-1 py-1.5 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+            id="sidebar-change-company-btn"
+          >
+            <span>Cambia / Gestisci Aziende</span>
+            <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+          </button>
+        )}
+      </div>
+
       {/* SECTION 1: Cedenti / Prestatori (Suppliers) */}
       <div className="flex flex-col gap-3">
         {/* Search */}

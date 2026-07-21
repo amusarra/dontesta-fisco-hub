@@ -11,7 +11,8 @@ import {
   ArrowLeft,
   PieChart as PieIcon,
   BarChart2,
-  FileText
+  FileText,
+  Receipt
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -28,7 +29,8 @@ import {
   Tooltip,
   Legend
 } from "recharts";
-import { FatturaElettronica, TIPO_DOCUMENTO_MAP, MODALITA_PAGAMENTO_MAP } from "../types";
+import { FatturaElettronica, TIPO_DOCUMENTO_MAP, MODALITA_PAGAMENTO_MAP, Azienda } from "../types";
+import { getInvoiceDirection } from "../utils/companyDb";
 import html2canvas from "html2canvas-pro";
 
 interface AnalyticsDashboardProps {
@@ -37,6 +39,7 @@ interface AnalyticsDashboardProps {
   selectedMonths: string[];
   onClose: () => void;
   onShowNotification?: (message: string, type: "success" | "error" | "info") => void;
+  activeCompany?: Azienda | null;
 }
 
 const COLORS = ["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#14B8A6", "#6366F1"];
@@ -51,7 +54,8 @@ export default function AnalyticsDashboard({
   selectedYears,
   selectedMonths,
   onClose,
-  onShowNotification
+  onShowNotification,
+  activeCompany
 }: AnalyticsDashboardProps) {
 
   // Format currency in Italian style
@@ -165,28 +169,58 @@ export default function AnalyticsDashboard({
     });
   }, [invoices, selectedYears, selectedMonths]);
 
-  // KPIs
+  // Filter invoices by direction
+  const emesseInvoices = useMemo(() => {
+    return filteredData.filter(inv => getInvoiceDirection(inv, activeCompany || null) === "EMESSA");
+  }, [filteredData, activeCompany]);
+
+  const ricevuteInvoices = useMemo(() => {
+    return filteredData.filter(inv => getInvoiceDirection(inv, activeCompany || null) === "RICEVUTA");
+  }, [filteredData, activeCompany]);
+
+  // KPIs - SOLO FATTURE EMESSE per imponibile/totale
   const kpis = useMemo(() => {
-    let imponibile = 0;
-    let imposta = 0;
-    let totale = 0;
+    let imponibile = 0; // Solo fatture emesse
+    let imposta = 0;    // Solo fatture emesse
+    let totale = 0;     // Solo fatture emesse
+    let emesseCount = 0;
+    let emesseTotale = 0;
+    let ricevuteCount = 0;
+    let ricevuteTotale = 0;
     
-    filteredData.forEach(inv => {
+    // Calcolo imponibile e totale SOLO su fatture EMESSE
+    emesseInvoices.forEach(inv => {
       imponibile += inv.totaleImponibile || 0;
       imposta += inv.totaleImposta || 0;
       totale += inv.totaleDocumento || 0;
     });
 
+    // Conteggi separati per emesse e ricevute
+    filteredData.forEach(inv => {
+      const dir = getInvoiceDirection(inv, activeCompany || null);
+      if (dir === "EMESSA") {
+        emesseCount += 1;
+        emesseTotale += inv.totaleDocumento || 0;
+      } else if (dir === "RICEVUTA") {
+        ricevuteCount += 1;
+        ricevuteTotale += inv.totaleDocumento || 0;
+      }
+    });
+
     return {
       count: filteredData.length,
-      imponibile,
-      imposta,
-      totale
+      imponibile,  // Solo fatture emesse
+      imposta,     // Solo fatture emesse
+      totale,      // Solo fatture emesse
+      emesseCount,
+      emesseTotale,
+      ricevuteCount,
+      ricevuteTotale
     };
-  }, [filteredData]);
+  }, [filteredData, emesseInvoices, activeCompany]);
 
   // --------------------------------------------------------
-  // CHART 1: Trend over Time (Monthly, Annual, or Daily)
+  // CHART 1: Trend over Time (Monthly, Annual, or Daily) - SOLO FATTURE EMESSE
   // --------------------------------------------------------
   const trendData = useMemo(() => {
     // Decide granularity based on what's selected
@@ -196,7 +230,7 @@ export default function AnalyticsDashboard({
     if (!hasYears && !hasMonths) {
       // No filter = Group by Year
       const groups: Record<string, { period: string; imponibile: number; imposta: number; totale: number }> = {};
-      filteredData.forEach(inv => {
+      emesseInvoices.forEach(inv => {
         const year = inv.datiGenerali.data.split("-")[0] || "N.D.";
         if (!groups[year]) {
           groups[year] = { period: year, imponibile: 0, imposta: 0, totale: 0 };
@@ -219,7 +253,7 @@ export default function AnalyticsDashboard({
         };
       });
 
-      filteredData.forEach(inv => {
+      emesseInvoices.forEach(inv => {
         const month = inv.datiGenerali.data.split("-")[1];
         const monthIdx = parseInt(month, 10) - 1;
         if (monthIdx >= 0 && monthIdx < 12) {
@@ -259,15 +293,15 @@ export default function AnalyticsDashboard({
           ...dailyMap[day]
         }));
     }
-  }, [filteredData, selectedYears, selectedMonths]);
+  }, [emesseInvoices, selectedYears, selectedMonths]);
 
   // --------------------------------------------------------
-  // CHART 2: Top Clients (Cessionari)
+  // CHART 2: Top Clients (Cessionari) - SOLO FATTURE EMESSE
   // --------------------------------------------------------
   const topClientsData = useMemo(() => {
     const clients: Record<string, { name: string; partitaIva: string; imponibile: number; totale: number }> = {};
     
-    filteredData.forEach(inv => {
+    emesseInvoices.forEach(inv => {
       const client = inv.cessionarioCommittente;
       const vat = client.anagrafica.partitaIva || client.anagrafica.codiceFiscale || "N.D.";
       const name = client.anagrafica.denominazione || 
@@ -284,15 +318,15 @@ export default function AnalyticsDashboard({
     return Object.values(clients)
       .sort((a, b) => b.totale - a.totale)
       .slice(0, 5);
-  }, [filteredData]);
+  }, [emesseInvoices]);
 
   // --------------------------------------------------------
-  // CHART 3: Top Suppliers (Cedenti)
+  // CHART 3: Top Suppliers (Cedenti) - SOLO FATTURE RICEVUTE
   // --------------------------------------------------------
   const topSuppliersData = useMemo(() => {
     const suppliers: Record<string, { name: string; partitaIva: string; imponibile: number; totale: number }> = {};
 
-    filteredData.forEach(inv => {
+    ricevuteInvoices.forEach(inv => {
       const supplier = inv.cedentePrestatore;
       const vat = supplier.anagrafica.partitaIva || supplier.anagrafica.codiceFiscale || "N.D.";
       const name = supplier.anagrafica.denominazione || 
@@ -309,7 +343,7 @@ export default function AnalyticsDashboard({
     return Object.values(suppliers)
       .sort((a, b) => b.totale - a.totale)
       .slice(0, 5);
-  }, [filteredData]);
+  }, [ricevuteInvoices]);
 
   // --------------------------------------------------------
   // CHART 4: Document Type split
@@ -352,6 +386,28 @@ export default function AnalyticsDashboard({
 
     return Object.values(methods).sort((a, b) => b.total - a.total);
   }, [filteredData]);
+
+  // --------------------------------------------------------
+  // CHART 6: Top Beni e Servizi Ricevuti - SOLO FATTURE RICEVUTE
+  // --------------------------------------------------------
+  const topBeniServiziRicevutiData = useMemo(() => {
+    const items: Record<string, { descrizione: string; quantita: number; totale: number }> = {};
+
+    ricevuteInvoices.forEach(inv => {
+      inv.linee.forEach(linea => {
+        const desc = (linea.descrizione || "Descrizione non disponibile").trim();
+        if (!items[desc]) {
+          items[desc] = { descrizione: desc, quantita: 0, totale: 0 };
+        }
+        items[desc].quantita += linea.quantita || 0;
+        items[desc].totale += linea.prezzoTotale || 0;
+      });
+    });
+
+    return Object.values(items)
+      .sort((a, b) => b.totale - a.totale)
+      .slice(0, 10); // Top 10 beni/servizi
+  }, [ricevuteInvoices]);
 
   return (
     <div className="flex-1 overflow-y-auto bg-slate-50 p-6 flex flex-col gap-6 animate-fade-in" id="analytics-dashboard-page">
@@ -430,7 +486,7 @@ export default function AnalyticsDashboard({
       </div>
 
       {/* KPI METRICS GRID */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 shrink-0">
         {/* KPI 1: Total Volume */}
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
           <div className="p-3 bg-blue-50 text-blue-600 rounded-lg shrink-0">
@@ -455,29 +511,67 @@ export default function AnalyticsDashboard({
           </div>
         </div>
 
-        {/* KPI 3: Taxes (IVA) */}
+        {/* KPI 3: Total VAT/Tax */}
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
           <div className="p-3 bg-amber-50 text-amber-600 rounded-lg shrink-0">
-            <FileText className="h-5 w-5" />
+            <Receipt className="h-5 w-5" />
           </div>
           <div>
-            <div className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Totale IVA (Imposta)</div>
+            <div className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Totale IVA</div>
             <div className="text-base font-black text-slate-900 leading-tight mt-0.5">{formatEuro(kpis.imposta)}</div>
-            <div className="text-[10px] text-slate-500 font-medium">Imposta calcolata</div>
+            <div className="text-[10px] text-slate-500 font-medium">IVA da versare allo Stato</div>
           </div>
         </div>
 
-        {/* KPI 4: Count */}
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="p-3 bg-violet-50 text-violet-600 rounded-lg shrink-0">
-            <Calendar className="h-5 w-5" />
+        {/* KPI 4: Emesse (if active company set) */}
+        {activeCompany && !activeCompany.isDummy ? (
+          <div className="bg-white p-4 rounded-xl border border-emerald-200 shadow-sm flex items-center gap-4 bg-emerald-50/20">
+            <div className="p-3 bg-emerald-100 text-emerald-700 rounded-lg shrink-0">
+              <TrendingUp className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="text-[10px] text-emerald-800 font-extrabold uppercase tracking-wider">Fatture Emesse ({kpis.emesseCount})</div>
+              <div className="text-base font-black text-emerald-900 leading-tight mt-0.5">{formatEuro(kpis.emesseTotale)}</div>
+              <div className="text-[10px] text-emerald-600 font-medium truncate max-w-[140px]" title={activeCompany.denominazione}>Cedente: {activeCompany.denominazione}</div>
+            </div>
           </div>
-          <div>
-            <div className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Fatture Caricate</div>
-            <div className="text-base font-black text-slate-900 leading-tight mt-0.5">{kpis.count}</div>
-            <div className="text-[10px] text-slate-500 font-medium">Fatture nel periodo corrente</div>
+        ) : (
+          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div className="p-3 bg-slate-50 text-slate-400 rounded-lg shrink-0">
+              <FileText className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Fatture Emesse</div>
+              <div className="text-base font-black text-slate-400 leading-tight mt-0.5">N.D.</div>
+              <div className="text-[10px] text-slate-400 font-medium">Configura azienda</div>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* KPI 5: Ricevute (if active company set) */}
+        {activeCompany && !activeCompany.isDummy ? (
+          <div className="bg-white p-4 rounded-xl border border-purple-200 shadow-sm flex items-center gap-4 bg-purple-50/20">
+            <div className="p-3 bg-purple-100 text-purple-700 rounded-lg shrink-0">
+              <Download className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="text-[10px] text-purple-800 font-extrabold uppercase tracking-wider">Fatture Ricevute ({kpis.ricevuteCount})</div>
+              <div className="text-base font-black text-purple-900 leading-tight mt-0.5">{formatEuro(kpis.ricevuteTotale)}</div>
+              <div className="text-[10px] text-purple-600 font-medium truncate max-w-[140px]" title={activeCompany.denominazione}>Cessionario: {activeCompany.denominazione}</div>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div className="p-3 bg-slate-50 text-slate-400 rounded-lg shrink-0">
+              <Download className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Fatture Ricevute</div>
+              <div className="text-base font-black text-slate-400 leading-tight mt-0.5">N.D.</div>
+              <div className="text-[10px] text-slate-400 font-medium">Configura azienda</div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* CHARTS CONTAINER GRID */}
@@ -790,6 +884,63 @@ export default function AnalyticsDashboard({
           </table>
         </div>
       </div>
+
+      {/* CHART 6: TOP BENI E SERVIZI RICEVUTI */}
+      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-4">
+        <div className="flex justify-between items-center border-b border-slate-100 pb-2.5">
+          <div className="flex items-center gap-2">
+            <FileText className="h-4.5 w-4.5 text-purple-500" />
+            <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-tight">Top 10 Beni e Servizi Ricevuti</h3>
+            <span className="text-[10px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full font-bold border border-purple-200">Solo Fatture Ricevute</span>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => downloadCSV(topBeniServiziRicevutiData, "top_beni_servizi_ricevuti", ["descrizione", "quantita", "totale"], {
+                descrizione: "Descrizione Bene/Servizio",
+                quantita: "Quantità",
+                totale: "Importo Totale"
+              })}
+              className="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 text-white text-[10px] font-bold rounded-md cursor-pointer transition-all active:scale-95 flex items-center gap-1"
+              title="Esporta dati in CSV"
+            >
+              <FileSpreadsheet className="h-3 w-3" />
+              CSV
+            </button>
+          </div>
+        </div>
+        
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase text-[9px] tracking-wider bg-slate-50">
+                <th className="py-2.5 px-3 w-2/5">Descrizione Bene/Servizio</th>
+                <th className="py-2.5 px-3 text-right">Quantità</th>
+                <th className="py-2.5 px-3 text-right">Importo Totale</th>
+              </tr>
+            </thead>
+            <tbody>
+              {topBeniServiziRicevutiData.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="py-4 text-center text-slate-400 font-medium">Nessun bene o servizio trovato nelle fatture ricevute.</td>
+                </tr>
+              ) : (
+                topBeniServiziRicevutiData.map((item, idx) => (
+                  <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50/70 transition-colors font-medium text-slate-700">
+                    <td className="py-3 px-3 text-slate-950 font-bold max-w-md truncate" title={item.descrizione}>
+                      {item.descrizione}
+                    </td>
+                    <td className="py-3 px-3 text-right font-mono text-slate-600">
+                      {item.quantita.toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                    <td className="py-3 px-3 text-right font-mono text-purple-600 font-bold">{formatEuro(item.totale)}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   );
 }

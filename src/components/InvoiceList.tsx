@@ -20,10 +20,14 @@ import {
   Paperclip,
   Eye,
   X,
-  Download
+  Download,
+  ArrowUpRight,
+  ArrowDownLeft,
+  Inbox
 } from "lucide-react";
-import { FatturaElettronica, TIPO_DOCUMENTO_MAP, Allegato } from "../types";
+import { FatturaElettronica, TIPO_DOCUMENTO_MAP, Allegato, Azienda } from "../types";
 import { sanitizeFilename, safeDownload, sanitizeDataUrl, isValidBase64, sanitizeBlobUrl } from "../utils/sanitize";
+import { getInvoiceDirection } from "../utils/companyDb";
 
 interface InvoiceListProps {
   invoices: FatturaElettronica[];
@@ -33,6 +37,7 @@ interface InvoiceListProps {
   onResetDatabase: () => void;
   onDeleteInvoices: (ids: string[]) => void;
   onShowNotification?: (message: string, type: "success" | "error" | "info") => void;
+  activeCompany?: Azienda | null;
 }
 
 export default function InvoiceList({
@@ -43,8 +48,10 @@ export default function InvoiceList({
   onResetDatabase,
   onDeleteInvoices,
   onShowNotification,
+  activeCompany
 }: InvoiceListProps) {
   const [docTypeFilter, setDocTypeFilter] = useState("Tutta"); // "Tutta" means All
+  const [directionFilter, setDirectionFilter] = useState<"TUTTE" | "EMESSE" | "RICEVUTE">("TUTTE");
   const [searchTerm, setSearchTerm] = useState("");
   const [multiSelectActive, setMultiSelectActive] = useState<boolean>(false);
   const [selectedForDelete, setSelectedForDelete] = useState<string[]>([]);
@@ -61,7 +68,7 @@ export default function InvoiceList({
   // Reset pagination to page 1 if filters, search, raw list, or itemsPerPage changes
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [docTypeFilter, searchTerm, invoices, itemsPerPage]);
+  }, [docTypeFilter, directionFilter, searchTerm, invoices, itemsPerPage]);
 
   // Clean up object URLs on preview change
   React.useEffect(() => {
@@ -187,23 +194,46 @@ export default function InvoiceList({
     setActivePreviewIndex(0);
   };
 
-  // Filter invoices based on Document Type dropdown and text search
+  // Filter invoices based on Document Type, Direction (Emessa/Ricevuta), and text search
   const filteredInvoices = invoices.filter((inv) => {
     // 1. Doc Type filter
     if (docTypeFilter !== "Tutta" && inv.datiGenerali.tipoDocumento !== docTypeFilter) {
       return false;
     }
 
-    // 2. Text Search (Matches number, supplier name, customer name, or description)
-    const query = searchTerm.toLowerCase();
+    // 2. Direction filter (Emessa vs Ricevuta)
+    if (directionFilter !== "TUTTE") {
+      const direction = getInvoiceDirection(inv, activeCompany || null);
+      if (directionFilter === "EMESSE" && direction !== "EMESSA") return false;
+      if (directionFilter === "RICEVUTE" && direction !== "RICEVUTA") return false;
+    }
+
+    // 3. Text Search (Matches number, supplier name/vat/cf, customer name/vat/cf, or line descriptions)
+    const query = searchTerm.toLowerCase().trim();
     if (!query) return true;
 
     const numMatch = inv.datiGenerali.numero.toLowerCase().includes(query);
-    const supplierMatch = inv.cedentePrestatore.anagrafica.denominazione.toLowerCase().includes(query);
-    const customerMatch = inv.cessionarioCommittente.anagrafica.denominazione.toLowerCase().includes(query);
-    const lineMatch = inv.linee.some(line => line.descrizione.toLowerCase().includes(query));
     
-    return numMatch || supplierMatch || customerMatch || lineMatch;
+    const supplierNameMatch = (inv.cedentePrestatore?.anagrafica?.denominazione || "").toLowerCase().includes(query);
+    const supplierVatMatch = (inv.cedentePrestatore?.anagrafica?.partitaIva || "").toLowerCase().includes(query);
+    const supplierCfMatch = (inv.cedentePrestatore?.anagrafica?.codiceFiscale || "").toLowerCase().includes(query);
+
+    const customerNameMatch = (inv.cessionarioCommittente?.anagrafica?.denominazione || "").toLowerCase().includes(query);
+    const customerVatMatch = (inv.cessionarioCommittente?.anagrafica?.partitaIva || "").toLowerCase().includes(query);
+    const customerCfMatch = (inv.cessionarioCommittente?.anagrafica?.codiceFiscale || "").toLowerCase().includes(query);
+
+    const lineMatch = inv.linee.some(line => (line.descrizione || "").toLowerCase().includes(query));
+
+    return (
+      numMatch ||
+      supplierNameMatch ||
+      supplierVatMatch ||
+      supplierCfMatch ||
+      customerNameMatch ||
+      customerVatMatch ||
+      customerCfMatch ||
+      lineMatch
+    );
   });
 
   // Sort invoices by date
@@ -397,6 +427,43 @@ export default function InvoiceList({
           </div>
         </div>
 
+        {/* Direction Filter Pills (Tutte / Emesse / Ricevute) */}
+        <div className="flex items-center bg-slate-100 p-1 rounded-lg text-xs font-semibold gap-1">
+          <button
+            onClick={() => setDirectionFilter("TUTTE")}
+            className={`flex-1 py-1 px-2 rounded-md transition-all text-center cursor-pointer text-[11px] ${
+              directionFilter === "TUTTE"
+                ? "bg-white text-slate-900 shadow-2xs font-extrabold"
+                : "text-slate-500 hover:text-slate-800"
+            }`}
+            id="filter-direction-all"
+          >
+            Tutte
+          </button>
+          <button
+            onClick={() => setDirectionFilter("EMESSE")}
+            className={`flex-1 py-1 px-2 rounded-md transition-all text-center flex items-center justify-center gap-1 cursor-pointer text-[11px] ${
+              directionFilter === "EMESSE"
+                ? "bg-emerald-600 text-white font-extrabold shadow-2xs"
+                : "text-emerald-700 hover:bg-emerald-50"
+            }`}
+            id="filter-direction-emesse"
+          >
+            <ArrowUpRight className="h-3 w-3 stroke-[2.5]" /> Emesse
+          </button>
+          <button
+            onClick={() => setDirectionFilter("RICEVUTE")}
+            className={`flex-1 py-1 px-2 rounded-md transition-all text-center flex items-center justify-center gap-1 cursor-pointer text-[11px] ${
+              directionFilter === "RICEVUTE"
+                ? "bg-purple-600 text-white font-extrabold shadow-2xs"
+                : "text-purple-700 hover:bg-purple-50"
+            }`}
+            id="filter-direction-ricevute"
+          >
+            <ArrowDownLeft className="h-3 w-3 stroke-[2.5]" /> Ricevute
+          </button>
+        </div>
+
         {/* Sorting and Total Results Sub-row */}
         <div className="flex items-center justify-between text-xs font-semibold pt-1 border-t border-slate-100 select-none">
           <div className="text-slate-500">
@@ -476,6 +543,7 @@ export default function InvoiceList({
         {paginatedInvoices.map((inv) => {
           const isSelected = selectedInvoice?.id === inv.id;
           const isChecked = selectedForDelete.includes(inv.id);
+          const direction = getInvoiceDirection(inv, activeCompany || null);
           
           return (
             <div
@@ -509,9 +577,9 @@ export default function InvoiceList({
               )}
               
               <div className="flex-1 min-w-0">
-                {/* Row 1: Document ID + Date + DocType + Actions */}
+                {/* Row 1: Document ID + Date + DocType + Direction Tag + Actions */}
                 <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
                     {/* Status Indicator circle */}
                     <span className={`w-2 h-2 rounded-full inline-block shrink-0 ${
                       isSelected ? "bg-blue-500" : "bg-emerald-500"
@@ -527,6 +595,20 @@ export default function InvoiceList({
                     <span className="text-[10px] px-1.5 py-0.5 rounded-sm bg-blue-50 text-blue-700 border border-blue-100 font-semibold truncate">
                       {inv.datiGenerali.tipoDocumento}
                     </span>
+
+                    {/* Direction Tag (EMESSA / RICEVUTA) */}
+                    {direction === "EMESSA" && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-sm bg-emerald-50 text-emerald-700 border border-emerald-200 font-extrabold flex items-center gap-0.5 shrink-0" title="Fattura Emessa">
+                        <ArrowUpRight className="h-3 w-3 stroke-[2.5]" />
+                        <span>EMESSA</span>
+                      </span>
+                    )}
+                    {direction === "RICEVUTA" && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-sm bg-purple-50 text-purple-700 border border-purple-200 font-extrabold flex items-center gap-0.5 shrink-0" title="Fattura Ricevuta">
+                        <ArrowDownLeft className="h-3 w-3 stroke-[2.5]" />
+                        <span>RICEVUTA</span>
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-1.5 shrink-0 ml-auto">

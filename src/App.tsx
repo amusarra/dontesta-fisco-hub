@@ -37,9 +37,11 @@ import InvoiceViewer from "./components/InvoiceViewer";
 import AnalyticsDashboard from "./components/AnalyticsDashboard";
 import DatabaseStatus from "./components/DatabaseStatus";
 import MultiSelect from "./components/MultiSelect";
+import CompanyModal from "./components/CompanyModal";
 import { parseFatturaXML, validateFatturaXML, extractXmlFromP7m, decodeXmlBytes } from "./utils/parser";
 import { loadInvoicesFromDB, saveInvoicesToDB, clearInvoicesDB, migrateFromLocalStorage } from "./utils/db";
-import { FatturaElettronica } from "./types";
+import { loadCompaniesFromDB, saveCompanyToDB, deleteCompanyFromDB, getActiveCompanyIdFromLS, setActiveCompanyIdInLS, DUMMY_GUEST_COMPANY } from "./utils/companyDb";
+import { FatturaElettronica, Azienda } from "./types";
 import appMetadata from "../metadata.json";
 
 interface Toast {
@@ -105,6 +107,15 @@ export default function App() {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState<boolean>(() => {
     return localStorage.getItem("dontesta_sidebar_expanded") !== "false";
   });
+  const [isInvoiceListExpanded, setIsInvoiceListExpanded] = useState<boolean>(() => {
+    return localStorage.getItem("dontesta_invoice_list_expanded") !== "false";
+  });
+
+  // Company management states
+  const [companies, setCompanies] = useState<Azienda[]>([]);
+  const [activeCompany, setActiveCompany] = useState<Azienda | null>(null);
+  const [isCompanyModalOpen, setIsCompanyModalOpen] = useState<boolean>(false);
+  const [companyModalInitialView, setCompanyModalInitialView] = useState<"startup" | "selection" | "form">("selection");
 
   // Work directory configuration
   const [workDirectory, setWorkDirectory] = useState<string>(() => {
@@ -125,6 +136,68 @@ export default function App() {
 
   const folderInputRef = useRef<HTMLInputElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
+
+  // Initialize companies database and select reference company
+  useEffect(() => {
+    const initCompanies = async () => {
+      try {
+        const list = await loadCompaniesFromDB();
+        setCompanies(list);
+
+        if (list.length === 0) {
+          // Requirement 1: No companies defined -> Ask user on startup
+          setActiveCompany(DUMMY_GUEST_COMPANY);
+          setCompanyModalInitialView("startup");
+          setIsCompanyModalOpen(true);
+        } else {
+          // Requirement 3: 1 or more companies -> Select reference company
+          const savedId = getActiveCompanyIdFromLS();
+          if (savedId === DUMMY_GUEST_COMPANY.id) {
+            setActiveCompany(DUMMY_GUEST_COMPANY);
+          } else {
+            const matched = list.find((c) => c.id === savedId);
+            if (matched) {
+              setActiveCompany(matched);
+            } else {
+              setActiveCompany(list[0]);
+              setActiveCompanyIdInLS(list[0].id);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Errore inizializzazione aziende:", err);
+        setActiveCompany(DUMMY_GUEST_COMPANY);
+      }
+    };
+
+    initCompanies();
+  }, []);
+
+  const handleSelectCompany = (company: Azienda) => {
+    setActiveCompany(company);
+    setActiveCompanyIdInLS(company.id);
+  };
+
+  const handleSaveCompany = async (company: Azienda) => {
+    await saveCompanyToDB(company);
+    const updated = await loadCompaniesFromDB();
+    setCompanies(updated);
+  };
+
+  const handleDeleteCompany = async (id: string) => {
+    await deleteCompanyFromDB(id);
+    const updated = await loadCompaniesFromDB();
+    setCompanies(updated);
+    if (activeCompany?.id === id) {
+      if (updated.length > 0) {
+        setActiveCompany(updated[0]);
+        setActiveCompanyIdInLS(updated[0].id);
+      } else {
+        setActiveCompany(DUMMY_GUEST_COMPANY);
+        setActiveCompanyIdInLS(DUMMY_GUEST_COMPANY.id);
+      }
+    }
+  };
 
   // Trigger folder scanning
   const triggerFolderScan = () => {
@@ -858,18 +931,76 @@ export default function App() {
             )}
           </button>
 
+          {/* Toggle Invoice List Button */}
+          <button
+            type="button"
+            onClick={() => {
+              const newVal = !isInvoiceListExpanded;
+              setIsInvoiceListExpanded(newVal);
+              localStorage.setItem("dontesta_invoice_list_expanded", String(newVal));
+            }}
+            className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-xs font-bold border cursor-pointer active:scale-95 shrink-0 ${
+              isInvoiceListExpanded 
+                ? "bg-slate-800 text-blue-400 border-slate-700 hover:text-white hover:bg-slate-700" 
+                : "bg-blue-600 text-white border-blue-500 hover:bg-blue-500 shadow-sm"
+            }`}
+            title={isInvoiceListExpanded ? "Nascondi lista fatture" : "Mostra lista fatture"}
+            id="invoice-list-toggle-btn"
+          >
+            <ListFilter className="h-4 w-4" />
+            <span className="hidden sm:inline">Lista Fatture</span>
+            {isInvoiceListExpanded ? (
+              <ChevronLeft className="h-3 w-3 opacity-75" />
+            ) : (
+              <ChevronRight className="h-3 w-3 opacity-75" />
+            )}
+          </button>
+
+          {/* Company Switcher / Anagrafica Button */}
+          <button
+            type="button"
+            onClick={() => {
+              setCompanyModalInitialView("selection");
+              setIsCompanyModalOpen(true);
+            }}
+            className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-xs font-bold border cursor-pointer active:scale-95 shrink-0 ${
+              activeCompany?.isDummy 
+                ? "bg-slate-800 text-amber-300 border-slate-700 hover:bg-slate-700 hover:text-amber-200" 
+                : "bg-blue-600 text-white border-blue-500 hover:bg-blue-500 shadow-sm"
+            }`}
+            title="Cambia o gestisci l'azienda di riferimento"
+            id="header-company-toggle-btn"
+          >
+            <Building2 className="h-4 w-4" />
+            <span className="hidden sm:inline">
+              {activeCompany?.isDummy
+                ? "Modalità Guest"
+                : activeCompany?.denominazione || "Seleziona Azienda"}
+            </span>
+          </button>
+
           {/* Dashboard Toggle Button */}
           <button
             type="button"
             onClick={() => {
+              if (activeCompany?.isDummy) return; // Non permettere switch in modalità Guest
               setActiveView(activeView === "list" ? "charts" : "list");
             }}
-            className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-xs font-bold border cursor-pointer active:scale-95 shrink-0 ${
-              activeView === "charts" 
-                ? "bg-blue-600 text-white border-blue-500 hover:bg-blue-500 shadow-sm font-extrabold" 
-                : "bg-slate-800 text-blue-400 border-slate-700 hover:text-white hover:bg-slate-700"
+            disabled={activeCompany?.isDummy}
+            className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-xs font-bold border shrink-0 ${
+              activeCompany?.isDummy
+                ? "bg-slate-200 text-slate-400 border-slate-300 cursor-not-allowed opacity-60"
+                : activeView === "charts" 
+                  ? "bg-blue-600 text-white border-blue-500 hover:bg-blue-500 shadow-sm font-extrabold cursor-pointer active:scale-95" 
+                  : "bg-slate-800 text-blue-400 border-slate-700 hover:text-white hover:bg-slate-700 cursor-pointer active:scale-95"
             }`}
-            title={activeView === "charts" ? "Mostra elenco fatture" : "Mostra statistiche e grafici analitici"}
+            title={
+              activeCompany?.isDummy 
+                ? "Grafici e statistiche disponibili solo con un'azienda configurata" 
+                : activeView === "charts" 
+                  ? "Mostra elenco fatture" 
+                  : "Mostra statistiche e grafici analitici"
+            }
             id="charts-view-toggle-btn"
           >
             <BarChart3 className="h-4 w-4" />
@@ -916,6 +1047,25 @@ export default function App() {
             Filtri: 
           </div>
           <div className="flex flex-wrap gap-1.5 items-center">
+            {activeCompany && (
+              <span 
+                onClick={() => {
+                  setCompanyModalInitialView("selection");
+                  setIsCompanyModalOpen(true);
+                }}
+                className={`px-2 py-0.5 rounded-sm font-bold text-[10px] border flex items-center gap-1 cursor-pointer transition-colors ${
+                  activeCompany.isDummy
+                    ? "bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100"
+                    : "bg-blue-50 text-blue-800 border-blue-200 hover:bg-blue-100"
+                }`}
+                title="Azienda di riferimento attiva. Fai clic per cambiare."
+                id="active-company-pill"
+              >
+                <Building2 className="h-3 w-3 shrink-0 text-blue-600" />
+                <span>Azienda: {activeCompany.denominazione}</span>
+              </span>
+            )}
+
             <span className="bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded-sm font-semibold text-[10px]">
               Anno: {selectedYears.length === 0 ? "TUTTI GLI ANNI" : selectedYears.length === 1 ? selectedYears[0] : `${selectedYears.length} anni`}
             </span>
@@ -961,6 +1111,7 @@ export default function App() {
           selectedMonths={selectedMonths}
           onClose={() => setActiveView("list")}
           onShowNotification={addToast}
+          activeCompany={activeCompany}
         />
       ) : (
         <main className="flex-1 flex overflow-hidden min-h-0 print:overflow-visible print:h-auto" id="asso-workspace">
@@ -973,22 +1124,30 @@ export default function App() {
                 setSelectedSupplier={setSelectedSupplier}
                 selectedCustomer={selectedCustomer}
                 setSelectedCustomer={setSelectedCustomer}
+                activeCompany={activeCompany}
+                onOpenCompanyManager={() => {
+                  setCompanyModalInitialView("selection");
+                  setIsCompanyModalOpen(true);
+                }}
               />
             </div>
           )}
 
           {/* Column 2: Invoices List (Middle Panel) */}
-          <div className="print:hidden h-full flex flex-col">
-            <InvoiceList
-              invoices={filteredInvoices}
-              selectedInvoice={selectedInvoice}
-              onSelectInvoice={setSelectedInvoice}
-              onUploadInvoices={handleUploadInvoices}
-              onResetDatabase={handleResetDatabase}
-              onDeleteInvoices={handleDeleteInvoices}
-              onShowNotification={addToast}
-            />
-          </div>
+          {isInvoiceListExpanded && (
+            <div className="print:hidden h-full flex flex-col">
+              <InvoiceList
+                invoices={filteredInvoices}
+                selectedInvoice={selectedInvoice}
+                onSelectInvoice={setSelectedInvoice}
+                onUploadInvoices={handleUploadInvoices}
+                onResetDatabase={handleResetDatabase}
+                onDeleteInvoices={handleDeleteInvoices}
+                onShowNotification={addToast}
+                activeCompany={activeCompany}
+              />
+            </div>
+          )}
 
           {/* Column 3: Invoice Detailed Viewer (Right Panel) */}
           <InvoiceViewer
@@ -1187,6 +1346,19 @@ export default function App() {
 
       {/* DATABASE STATUS FOOTER */}
       <DatabaseStatus />
+
+      {/* COMPANY ANAGRAFICA & SELECTION MODAL */}
+      <CompanyModal
+        isOpen={isCompanyModalOpen}
+        onClose={() => setIsCompanyModalOpen(false)}
+        companies={companies}
+        activeCompany={activeCompany}
+        onSelectCompany={handleSelectCompany}
+        onSaveCompany={handleSaveCompany}
+        onDeleteCompany={handleDeleteCompany}
+        initialView={companyModalInitialView}
+        onShowNotification={addToast}
+      />
     </div>
   );
 }

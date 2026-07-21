@@ -10,6 +10,24 @@ export interface Anagrafica {
   partitaIva?: string; // combination of IdPaese + IdCodice
 }
 
+export interface Azienda {
+  id: string;
+  denominazione: string;
+  partitaIva: string;
+  codiceFiscale?: string;
+  indirizzo?: string;
+  cap?: string;
+  comune?: string;
+  provincia?: string;
+  nazione?: string;
+  isDummy?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type InvoiceDirection = "EMESSA" | "RICEVUTA" | "UNCLASSIFIED";
+
+
 export interface Sede {
   indirizzo: string;
   numeroCivico?: string;

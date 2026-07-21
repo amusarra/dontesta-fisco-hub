@@ -13,8 +13,9 @@
 import { openDB, IDBPDatabase } from "idb";
 
 const DB_NAME = "fattura_pa_reader_db";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_NAME = "invoices";
+const COMPANY_STORE_NAME = "companies";
 
 // Legacy localStorage key used before this migration
 const LS_LEGACY_KEY = "dontesta_uploaded_invoices";
@@ -33,15 +34,18 @@ type FatturaDB = {
   };
 };
 
-let _db: IDBPDatabase<FatturaDB> | null = null;
+let _db: IDBPDatabase<any> | null = null;
 
 /** Opens (or reuses) the IndexedDB connection. */
-async function getDB(): Promise<IDBPDatabase<FatturaDB>> {
+async function getDB(): Promise<IDBPDatabase<any>> {
   if (_db) return _db;
-  _db = await openDB<FatturaDB>(DB_NAME, DB_VERSION, {
+  _db = await openDB(DB_NAME, DB_VERSION, {
     upgrade(db) {
       if (!db.objectStoreNames.contains(STORE_NAME)) {
         db.createObjectStore(STORE_NAME, { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains(COMPANY_STORE_NAME)) {
+        db.createObjectStore(COMPANY_STORE_NAME, { keyPath: "id" });
       }
     },
   });
