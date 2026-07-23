@@ -16,9 +16,21 @@ disponibile per il tuo sistema operativo (Windows, macOS o Linux).
 
 - 📄 **Supporto XML & P7M**: Caricamento diretto di file XML standard e file firmati digitalmente in formato CAdES (`.xml.p7m`).
 - 🔑 **Firma Digitale Reale (PKCS#7)**: Estrazione dei metadati del certificato X.509 tramite **node-forge**: firmatario (CN), ente emittente, numero seriale, validità, Key Usage, CRL Distribution Points, OCSP, SAN e Signing Time.
+- 🏢 **Gestione Multi-Azienda**: Sistema completo per gestire più aziende con classificazione automatica delle fatture come emesse o ricevute.
+  - Modal di startup per configurazione azienda o modalità Guest.
+  - CRUD completo per anagrafica aziende.
+  - Classificazione automatica fatture (EMESSA/RICEVUTA) basata su P.IVA/CF.
+  - Cambio azienda attiva in qualsiasi momento.
 - 💻 **Desktop Ready (Tauri v2)**: Applicazione nativa ultraleggera e sicura per Windows, macOS (Apple Silicon **e** Intel) e Linux.
 - 🔒 **Sicurezza Client-Side**: Tutti i dati rimangono sul tuo dispositivo. Nessuna informazione sensibile viene inviata a server esterni.
-- 📊 **Dashboard Analitica**: Grafici di distribuzione e filtri avanzati per anno, mese, fornitore e cliente.
+- 📊 **Dashboard Analitica Avanzata**: 
+  - Grafici separati per fatture emesse (fatturato) e ricevute (spese).
+  - KPIs dedicati: Volume d'Affari, Totale Imponibile, **Totale IVA**, conteggi emesse/ricevute.
+  - Analisi fornitori, clienti, beni e servizi.
+  - Disabilitazione automatica in modalità Guest.
+- 🎨 **UI Flessibile**: Toggle per nascondere sidebar filtri e lista fatture, con persistenza preferenze.
+- 🔍 **Ricerca Avanzata**: Ricerca fatture per Partita IVA, Codice Fiscale, numero, data.
+- 🏷️ **Icone Direzione**: Badge ed icone visive per distinguere fatture emesse da ricevute.
 - 🖨️ **Stampa e Download**: Stampa le fatture o scarica l'XML originale decodificato.
 
 ---

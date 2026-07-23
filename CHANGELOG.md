@@ -7,6 +7,53 @@ e questo progetto aderisce a [Semantic Versioning](https://semver.org/lang/it/).
 
 ---
 
+## [1.1.0] - 2026-07-21
+
+### Aggiunto
+- **Gestione Multi-Azienda**: Sistema completo per gestire più aziende e classificare automaticamente le fatture come emesse o ricevute.
+  - Modal di startup per creare nuova azienda o usare modalità Guest/Visualizzatore.
+  - CRUD completo per anagrafica aziende (crea, modifica, elimina).
+  - Selezione azienda attiva con possibilità di cambio in qualsiasi momento.
+  - Classificazione automatica fatture (EMESSA/RICEVUTA/NON CLASSIFICATA) basata su confronto P.IVA/CF.
+  - Database IndexedDB dedicato per persistenza aziende.
+  - Modalità Guest/Dummy per uso come semplice visualizzatore senza configurazione.
+- **Card KPI Totale IVA**: Nuova card nella dashboard analitica che mostra l'IVA totale delle fatture emesse da versare allo Stato.
+  - Icona Receipt (scontrino) arancione distintiva.
+  - Descrizione "IVA da versare allo Stato".
+  - Calcolo automatico da fatture emesse.
+- **Toggle UI Flessibili**:
+  - Pulsante per nascondere/mostrare la sidebar laterale dei filtri (fornitori/clienti).
+  - Pulsante per nascondere/mostrare il pannello centrale con la lista delle fatture.
+  - Persistenza delle preferenze UI in localStorage.
+  - Icone intuitive con animazioni chevron.
+- **Icone Direzione Fatture**: Badge ed icone visive per distinguere fatture emesse da ricevute.
+  - Badge colorati "EMESSA" (verde) e "RICEVUTA" (viola) nelle card fatture.
+  - Icone allegati con indicazione visiva della direzione.
+- **Ricerca Avanzata**: Funzionalità di ricerca fatture per Partita IVA o Codice Fiscale.
+
+### Modificato
+- **Dashboard Grafici & Statistiche - Separazione Emesse/Ricevute**:
+  - **Andamento del Fatturato**: Ora mostra solo le fatture EMESSE (volume d'affari).
+  - **Top 5 Clienti**: Basato solo su fatture EMESSE.
+  - **Riepilogo Fornitori / Spese**: Corretto per mostrare solo fatture RICEVUTE (spese sostenute).
+  - **Nuovo Grafico**: "Top 10 Beni e Servizi Ricevuti" per analizzare le spese da fatture ricevute (tema viola).
+  - Disabilitazione grafici in modalità Guest/Visualizzatore (pulsante grigio con tooltip).
+- **KPIs Dashboard - Solo Fatture Emesse**:
+  - **Volume d'Affari Totale**: Ora calcola solo su fatture EMESSE (fatturato attivo).
+  - **Totale Imponibile**: Ora calcola solo su fatture EMESSE (base imponibile del fatturato).
+  - **Totale IVA**: Nuova card che mostra IVA solo su fatture EMESSE.
+  - **Fatture Emesse**: Card dettaglio con conteggio e totale (verde).
+  - **Fatture Ricevute**: Card dettaglio con conteggio e totale (viola).
+  - Layout responsive: 5 colonne su desktop, 2 su tablet, 1 su mobile.
+
+### Tecnologie e Miglioramenti
+- Utilizzo di `useMemo` per ottimizzazione filtri emesse/ricevute.
+- Separazione logica completa tra fatturato attivo (emesse) e spese (ricevute).
+- Interfaccia utente più flessibile e personalizzabile.
+- Migliore esperienza utente per gestione multi-azienda.
+
+---
+
 ## [1.0.0] - 2026-07-15
 
 Prima release pubblica di **DonTesta FatturaPA**.
