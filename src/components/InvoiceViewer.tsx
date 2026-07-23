@@ -104,9 +104,10 @@ interface InvoiceViewerProps {
   invoice: FatturaElettronica | null;
   onDownloadXml: (invoice: FatturaElettronica) => void;
   onShowNotification?: (message: string, type: "success" | "error" | "info") => void;
+  pdfExportDirectory?: string;
 }
 
-export default function InvoiceViewer({ invoice, onDownloadXml, onShowNotification }: InvoiceViewerProps) {
+export default function InvoiceViewer({ invoice, onDownloadXml, onShowNotification, pdfExportDirectory }: InvoiceViewerProps) {
   const [viewTemplate, setViewTemplate] = useState<"Semplificata" | "Completa" | "SorgenteXML">("Semplificata");
   const [zoomScale, setZoomScale] = useState<number>(100); // Zoom level from 75 to 150%
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
@@ -280,10 +281,77 @@ export default function InvoiceViewer({ invoice, onDownloadXml, onShowNotificati
         .replace(/\.p7m$/i, "");
       const pdfFileName = `${cleanName}.pdf`;
 
-      pdf.save(pdfFileName);
+      // Check if Tauri is available and use custom directory if specified
+      // @ts-ignore
+      if (window.__TAURI_INTERNALS__ && pdfExportDirectory) {
+        try {
+          console.log("[PDF Export] Using Tauri mode with directory:", pdfExportDirectory);
+          
+          // Import Tauri plugins dynamically
+          const tauriDialog = await import("@tauri-apps/plugin-dialog");
+          const tauriFs = await import("@tauri-apps/plugin-fs");
+          
+          console.log("[PDF Export] Tauri plugins loaded successfully");
+          
+          // Use Tauri dialog to save file in custom directory
+          const defaultPath = pdfExportDirectory.endsWith('/') || pdfExportDirectory.endsWith('\\') 
+            ? `${pdfExportDirectory}${pdfFileName}`
+            : `${pdfExportDirectory}/${pdfFileName}`;
+          
+          console.log("[PDF Export] Default path:", defaultPath);
+          
+          const filePath = await tauriDialog.save({
+            defaultPath: defaultPath,
+            filters: [{
+              name: 'PDF',
+              extensions: ['pdf']
+            }]
+          });
 
-      if (onShowNotification) {
-        onShowNotification(`File PDF "${pdfFileName}" salvato correttamente!`, "success");
+          console.log("[PDF Export] Selected file path:", filePath);
+
+          if (filePath) {
+            // Convert PDF to Uint8Array
+            const pdfBlob = pdf.output('blob');
+            const pdfArrayBuffer = await pdfBlob.arrayBuffer();
+            const pdfData = new Uint8Array(pdfArrayBuffer);
+            
+            console.log("[PDF Export] PDF data size:", pdfData.length, "bytes");
+            
+            // Write file using Tauri FS
+            await tauriFs.writeFile(filePath, pdfData);
+            
+            console.log("[PDF Export] File written successfully");
+            
+            if (onShowNotification) {
+              onShowNotification(`File PDF "${pdfFileName}" salvato in "${filePath}"!`, "success");
+            }
+          } else {
+            console.log("[PDF Export] User cancelled save dialog");
+            if (onShowNotification) {
+              onShowNotification("Salvataggio PDF annullato.", "info");
+            }
+          }
+        } catch (tauriErr: any) {
+          console.error("[PDF Export] Tauri error details:", tauriErr);
+          console.error("[PDF Export] Error message:", tauriErr.message);
+          console.error("[PDF Export] Error stack:", tauriErr.stack);
+          // Fallback to browser download
+          pdf.save(pdfFileName);
+          if (onShowNotification) {
+            onShowNotification(`File PDF "${pdfFileName}" salvato nella cartella Downloads (fallback).`, "success");
+          }
+        }
+      } else {
+        // Browser mode or no custom directory: use default browser download
+        pdf.save(pdfFileName);
+
+        if (onShowNotification) {
+          const msg = pdfExportDirectory 
+            ? `File PDF "${pdfFileName}" salvato (modalità web: controlla Downloads).`
+            : `File PDF "${pdfFileName}" salvato correttamente!`;
+          onShowNotification(msg, "success");
+        }
       }
     } catch (err: any) {
       console.error("Errore esportazione PDF:", err);

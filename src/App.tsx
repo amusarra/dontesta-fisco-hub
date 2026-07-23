@@ -121,6 +121,9 @@ export default function App() {
   const [workDirectory, setWorkDirectory] = useState<string>(() => {
     return localStorage.getItem("dontesta_work_directory") || "/Users/amusarra/Downloads";
   });
+  const [pdfExportDirectory, setPdfExportDirectory] = useState<string>(() => {
+    return localStorage.getItem("dontesta_pdf_export_directory") || "";
+  });
   const [isAutoRefresh, setIsAutoRefresh] = useState<boolean>(() => {
     return localStorage.getItem("dontesta_auto_refresh") === "true";
   });
@@ -132,6 +135,8 @@ export default function App() {
   const [isInfoOpen, setIsInfoOpen] = useState<boolean>(false);
   const [isEditingPath, setIsEditingPath] = useState<boolean>(false);
   const [tempPath, setTempPath] = useState<string>(workDirectory);
+  const [isEditingPdfPath, setIsEditingPdfPath] = useState<boolean>(false);
+  const [tempPdfPath, setTempPdfPath] = useState<string>(pdfExportDirectory);
   const [nextScanCountdown, setNextScanCountdown] = useState<number>(15);
 
   const folderInputRef = useRef<HTMLInputElement>(null);
@@ -270,6 +275,34 @@ export default function App() {
       document.removeEventListener("click", handleExternalLinks);
     };
   }, []);
+
+  // Handle PDF export directory selection with Tauri dialog
+  const handleSelectPdfExportDirectory = async () => {
+    try {
+      // @ts-ignore
+      if (window.__TAURI_INTERNALS__) {
+        const { open } = await import("@tauri-apps/plugin-dialog");
+        const selectedDir = await open({
+          directory: true,
+          multiple: false,
+          title: "Seleziona directory per export PDF",
+        });
+        
+        if (selectedDir && typeof selectedDir === "string") {
+          setPdfExportDirectory(selectedDir);
+          setTempPdfPath(selectedDir);
+          localStorage.setItem("dontesta_pdf_export_directory", selectedDir);
+          addToast(`Directory PDF impostata: ${selectedDir}`, "success");
+        }
+      } else {
+        // Fallback for web mode
+        addToast("Selezione directory non disponibile in modalità web", "info");
+      }
+    } catch (err) {
+      console.error("Errore nella selezione della directory PDF:", err);
+      addToast("Errore nella selezione della directory", "error");
+    }
+  };
 
   // Handle local folder selection with real file uploading
   const handleFolderSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -825,6 +858,84 @@ export default function App() {
                     id="folder-input-picker"
                   />
 
+                  {/* PDF Export Directory Configuration */}
+                  <div className="border-t border-slate-100 pt-3 mb-3">
+                    <label className="block text-xs font-bold text-slate-700 mb-3">
+                      Directory esportazione PDF:
+                    </label>
+                    
+                    <div className="flex items-center gap-3 bg-slate-50/50 p-2.5 rounded border border-slate-100">
+                      {/* Folder picker button */}
+                      <button
+                        type="button"
+                        onClick={handleSelectPdfExportDirectory}
+                        className="w-9 h-9 rounded-full bg-white border-2 border-slate-800 flex items-center justify-center shrink-0 cursor-pointer hover:bg-slate-50 transition-all active:scale-95"
+                        title="Seleziona directory per export PDF"
+                      >
+                        <FolderOpen className="h-4 w-4 text-slate-900" />
+                      </button>
+
+                      <div className="flex-1 min-w-0">
+                        {isEditingPdfPath ? (
+                          <div className="flex items-center gap-1.5">
+                            <input
+                              type="text"
+                              value={tempPdfPath}
+                              onChange={(e) => setTempPdfPath(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  setPdfExportDirectory(tempPdfPath.trim());
+                                  localStorage.setItem("dontesta_pdf_export_directory", tempPdfPath.trim());
+                                  setIsEditingPdfPath(false);
+                                  addToast("Directory PDF aggiornata.", "success");
+                                } else if (e.key === "Escape") {
+                                  setTempPdfPath(pdfExportDirectory);
+                                  setIsEditingPdfPath(false);
+                                }
+                              }}
+                              placeholder="Lascia vuoto per usare Downloads"
+                              className="w-full text-[11px] font-mono font-bold text-[#00A3E0] bg-white border border-blue-300 rounded px-1.5 py-0.5 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+                              autoFocus
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPdfExportDirectory(tempPdfPath.trim());
+                                localStorage.setItem("dontesta_pdf_export_directory", tempPdfPath.trim());
+                                setIsEditingPdfPath(false);
+                                addToast("Directory PDF aggiornata.", "success");
+                              }}
+                              className="p-0.5 text-emerald-600 hover:bg-emerald-50 rounded"
+                            >
+                              <Check className="h-3 w-3" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setTempPdfPath(pdfExportDirectory);
+                                setIsEditingPdfPath(false);
+                              }}
+                              className="p-0.5 text-rose-600 hover:bg-rose-50 rounded"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div 
+                            className="text-[11px] font-extrabold font-mono text-[#00A3E0] hover:underline cursor-pointer select-all truncate break-all"
+                            onClick={() => setIsEditingPdfPath(true)}
+                            title="Fai clic per modificare la directory PDF"
+                          >
+                            {pdfExportDirectory || "(Downloads predefinita)"}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-slate-500 mt-1.5 ml-1">
+                      Se specificata, i PDF verranno salvati in questa directory anziché in Downloads.
+                    </p>
+                  </div>
+
                   {/* Auto-Refresh control block */}
                   <div className="border-t border-slate-100 pt-3 flex flex-col gap-2">
                     <label className="flex items-center gap-2.5 select-none cursor-pointer">
@@ -1154,6 +1265,7 @@ export default function App() {
             invoice={selectedInvoice}
             onDownloadXml={handleDownloadXml}
             onShowNotification={addToast}
+            pdfExportDirectory={pdfExportDirectory}
           />
         </main>
       )}
