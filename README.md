@@ -35,6 +35,16 @@ disponibile per il tuo sistema operativo (Windows, macOS o Linux).
 
 ---
 
+## 💻 Requisiti di Sistema e Compatibilità Desktop
+
+L'applicazione desktop è distribuita per i principali sistemi operativi con le seguenti note di compatibilità:
+
+* **macOS**: Consigliato **macOS 15 (Sequoia)** o superiore (sia Apple Silicon che Intel). *Nota: su versioni precedenti come macOS 14 (Sonoma), le politiche della sandbox di WKWebView potrebbero influenzare la persistenza del database IndexedDB locale tra le ripartenze.*
+* **Linux**: Richiede **WebKitGTK 4.1** (`libwebkit2gtk-4.1`). Si raccomanda l'uso di distribuzioni aggiornate (es. Ubuntu 22.04+, Fedora 45+).
+* **Windows**: Compatibile con Windows 10/11 (richiede WebView2 runtime, solitamente preinstallato).
+
+---
+
 ## 🛠️ Tecnologie Utilizzate
 
 - **Frontend**: React 19, TypeScript, Vite, Tailwind CSS v4, Lucide Icons, Motion, Recharts.
@@ -127,6 +137,25 @@ Tutti gli artefatti vengono raccolti e allegati a una **bozza di release GitHub*
 Compila e pubblica automaticamente la landing page in `/docs` a ogni push sul ramo `main`.
 
 La pagina è accessibile all'indirizzo `https://<tuo-utente>.github.io/<nome-repo>/`.
+
+---
+
+## 🐛 Troubleshooting & Segnalazione Issue
+
+In caso di anomalie o comportamenti inattesi durante l'esecuzione o il build:
+
+- Linux - Schermata Nera all'avvio (GPU legacy / Intel-NVIDIA):
+Se l'applicazione mostra uno schermo nero all'avvio su hardware datato o schede grafiche legacy, disabilita il compositing di WebKitGTK avviando l'app con la seguente variabile d'ambiente:
+
+    ```bash
+    WEBKIT_DISABLE_COMPOSITING_MODE=1 dontesta-fatturapa
+    ```
+
+- Linux - Symbol lookup error (undefined symbol):
+Se riscontri errori di caricamento dinamico delle librerie all'avvio, assicurato che il sistema abbia installato la versione aggiornata del pacchetto webkit2gtk4.1 (es. aggiornando la distribuzione o tramite sudo dnf update webkit2gtk4.1 / sudo apt update && sudo apt upgrade).
+
+Hai riscontrato un bug o desideri proporre una nuova funzionalità?
+Controlla o apri una segnalazione sulla pagina delle [GitHub Issues](https://github.com/amusarra/fattura-pa-reader/issues).
 
 ---
 
