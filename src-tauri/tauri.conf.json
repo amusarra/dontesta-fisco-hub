@@ -59,12 +59,12 @@
     "linux": {
       "deb": {
         "files": {
-          "/usr/share/metainfo/DonTestaFatturaPA.metainfo.xml": "DonTestaFatturaPA.metainfo.xml"
+          "/usr/share/metainfo/it.dontesta.fatturapa.metainfo.xml": "it.dontesta.fatturapa.metainfo.xml"
         }
       },
       "rpm": {
         "files": {
-          "/usr/share/metainfo/DonTestaFatturaPA.metainfo.xml": "DonTestaFatturaPA.metainfo.xml"
+          "/usr/share/metainfo/it.dontesta.fatturapa.metainfo.xml": "it.dontesta.fatturapa.metainfo.xml"
         }
       }
     }

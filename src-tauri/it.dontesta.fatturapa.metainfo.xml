@@ -1,10 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-    <id>DonTestaFatturaPA</id>
+    <id>it.dontesta.fatturapa</id>
     <metadata_license>CC0-1.0</metadata_license>
     <project_license>MIT</project_license>
     <name>DonTesta FatturaPA</name>
     <summary>Visualizzatore open-source e cross-platform per fatture elettroniche XML</summary>
+
+    <developer id="it.dontesta">
+        <name>Antonio Musarra</name>
+    </developer>
+
+    <categories>
+        <category>Office</category>
+        <category>Finance</category>
+    </categories>
 
     <description>
         <p>
@@ -23,14 +32,17 @@
         </ul>
     </description>
 
+    <!-- Associa espressamente il file .desktop generato da Tauri -->
     <launchable type="desktop-id">DonTestaFatturaPA.desktop</launchable>
+
+    <!-- Corrisponde al campo Icon=dontesta-fatturapa del file .desktop -->
     <icon type="stock">dontesta-fatturapa</icon>
 
     <url type="homepage">https://www.dontesta.it</url>
     <url type="bugtracker">https://github.com/amusarra/fattura-pa-reader/issues</url>
     <url type="vcs-browser">https://github.com/amusarra/fattura-pa-reader</url>
 
-    <content_rating type="oem-1.0" />
+    <content_rating type="oars-1.1" />
 
     <releases>
         <release version="1.0.0" date="2026-07-28">
