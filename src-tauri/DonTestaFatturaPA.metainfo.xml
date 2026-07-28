@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-    <id>it.dontesta.fatturapa</id>
+    <id>DonTestaFatturaPA</id>
     <metadata_license>CC0-1.0</metadata_license>
     <project_license>MIT</project_license>
     <name>DonTesta FatturaPA</name>
@@ -23,7 +23,8 @@
         </ul>
     </description>
 
-    <launchable type="desktop-id">it.dontesta.fatturapa.desktop</launchable>
+    <launchable type="desktop-id">DonTestaFatturaPA.desktop</launchable>
+    <icon type="stock">dontesta-fatturapa</icon>
 
     <url type="homepage">https://www.dontesta.it</url>
     <url type="bugtracker">https://github.com/amusarra/fattura-pa-reader/issues</url>
