@@ -55,6 +55,18 @@
       "signingIdentity": "-",
       "hardenedRuntime": false,
       "minimumSystemVersion": "10.13"
+    },
+    "linux": {
+      "deb": {
+        "files": {
+          "/usr/share/metainfo/it.dontesta.fatturapa.metainfo.xml": "it.dontesta.fatturapa.metainfo.xml"
+        }
+      },
+      "rpm": {
+        "files": {
+          "/usr/share/metainfo/it.dontesta.fatturapa.metainfo.xml": "it.dontesta.fatturapa.metainfo.xml"
+        }
+      }
     }
   }
 }
