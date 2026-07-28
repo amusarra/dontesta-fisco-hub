@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+    <id>it.dontesta.fatturapa</id>
+    <metadata_license>CC0-1.0</metadata_license>
+    <project_license>MIT</project_license>
+    <name>DonTesta FatturaPA</name>
+    <summary>Visualizzatore open-source e cross-platform per fatture elettroniche XML</summary>
+
+    <description>
+        <p>
+            DonTesta FatturaPA consente di importare, organizzare e visualizzare le fatture elettroniche in modo semplice,
+            veloce ed efficiente direttamente sul tuo desktop.
+        </p>
+        <p>
+            Funzionalità principali:
+        </p>
+        <ul>
+            <li>Supporto XML e file firmati digitalmente P7M (CAdES)</li>
+            <li>Estrazione e verifica dettagliata dei certificati di firma X.509</li>
+            <li>Gestione multi-azienda e classificazione automatica (Emesse / Ricevute)</li>
+            <li>Dashboard analitica con KPI e grafici di fatturato e spesa</li>
+            <li>Privacy totale: elaborazione 100% client-side e locale</li>
+        </ul>
+    </description>
+
+    <launchable type="desktop-id">it.dontesta.fatturapa.desktop</launchable>
+
+    <url type="homepage">https://www.dontesta.it</url>
+    <url type="bugtracker">https://github.com/amusarra/fattura-pa-reader/issues</url>
+    <url type="vcs-browser">https://github.com/amusarra/fattura-pa-reader</url>
+
+    <content_rating type="oem-1.0" />
+
+    <releases>
+        <release version="1.0.0" date="2026-07-28">
+            <description>
+                <p>Prima release ufficiale di DonTesta FatturaPA.</p>
+            </description>
+        </release>
+    </releases>
+
+    <screenshots>
+        <screenshot type="default">
+            <caption>Dashboard analitica e gestione fatture</caption>
+            <image>https://raw.githubusercontent.com/amusarra/fattura-pa-reader/docs/resources/images/screenshot-main.png</image>
+        </screenshot>
+    </screenshots>
+</component>
