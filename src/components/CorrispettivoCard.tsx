@@ -203,7 +203,7 @@ export default function CorrispettivoCard({
             Importo Totale
           </div>
           <div className="text-xl font-mono font-black text-emerald-700">
-            {formatEuro(corrispettivo.totaleAmmontare)}
+            {formatEuro(corrispettivo.pagatoContanti + corrispettivo.pagatoElettronico + (corrispettivo.ticketPagato || 0))}
           </div>
           
           {/* Ripartizione IVA dettagliata */}
@@ -222,7 +222,7 @@ export default function CorrispettivoCard({
                     </span>
                   )}
                   <span className="text-slate-700">
-                    Imp: {formatEuro(riep.imponibileCalcolato || 0)}
+                    Imp: {formatEuro(riep.ammontare || 0)}
                   </span>
                   <span className="text-purple-700">
                     IVA: {formatEuro(riep.imposta || 0)}

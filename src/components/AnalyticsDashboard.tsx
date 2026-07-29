@@ -352,12 +352,12 @@ export default function AnalyticsDashboard({
   }, [ricevuteInvoices]);
 
   // --------------------------------------------------------
-  // CHART 4: Document Type split
+  // CHART 4: Document Type split - SOLO FATTURE EMESSE
   // --------------------------------------------------------
   const docTypeData = useMemo(() => {
     const types: Record<string, { code: string; type: string; count: number; total: number }> = {};
 
-    filteredData.forEach(inv => {
+    emesseInvoices.forEach(inv => {
       const code = inv.datiGenerali.tipoDocumento || "N.D.";
       const decoded = TIPO_DOCUMENTO_MAP[code] || inv.datiGenerali.tipoDocumentoDecodificato || code;
       
@@ -369,7 +369,7 @@ export default function AnalyticsDashboard({
     });
 
     return Object.values(types).sort((a, b) => b.total - a.total);
-  }, [filteredData]);
+  }, [emesseInvoices]);
 
   // --------------------------------------------------------
   // CHART 5: Payment Methods split
@@ -551,23 +551,29 @@ export default function AnalyticsDashboard({
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-slate-50 p-4 rounded-sm border border-slate-200">
-              <div className="text-xs uppercase font-bold text-slate-400">Fatturato Fatture Emesse</div>
-              <div className="text-2xl font-mono font-bold text-blue-400 mt-2">{formatEuro(kpis.emesseTotale)}</div>
+              <div className="text-xs uppercase font-bold text-slate-600">Fatturato Fatture Emesse</div>
+              <div className="text-2xl font-mono font-bold text-blue-600 mt-2">{formatEuro(kpis.emesseTotale)}</div>
               <div className="text-xs text-slate-500 mt-1">{kpis.emesseCount} Fatture Emesse</div>
             </div>
 
             <div className="bg-slate-50 p-4 rounded-sm border border-slate-200">
-              <div className="text-xs uppercase font-bold text-slate-400">Totale Incassi Corrispettivi</div>
-              <div className="text-2xl font-mono font-bold text-emerald-400 mt-2">
-                {formatEuro(corrispettivi.reduce((acc, c) => acc + (c.isPeriodoInattivo ? 0 : c.totaleAmmontare || 0), 0))}
+              <div className="text-xs uppercase font-bold text-slate-600">Totale Incassi Corrispettivi</div>
+              <div className="text-2xl font-mono font-bold text-emerald-600 mt-2">
+                {formatEuro(corrispettivi.reduce((acc, c) => {
+                  if (c.isPeriodoInattivo) return acc;
+                  return acc + (c.pagatoContanti || 0) + (c.pagatoElettronico || 0) + (c.ticketPagato || 0);
+                }, 0))}
               </div>
-              <div className="text-xs text-slate-500 mt-1">{corrispettivi.length} Registri Corrispettivi</div>
+              <div className="text-xs text-slate-500 mt-1">{corrispettivi.filter(c => !c.isPeriodoInattivo).length} Registri Corrispettivi</div>
             </div>
 
             <div className="bg-slate-50 p-4 rounded-sm border border-slate-200">
-              <div className="text-xs uppercase font-bold text-slate-400">Volume D'Affari Complessivo</div>
-              <div className="text-2xl font-mono font-black text-amber-400 mt-2">
-                {formatEuro(kpis.emesseTotale + corrispettivi.reduce((acc, c) => acc + (c.isPeriodoInattivo ? 0 : c.totaleAmmontare || 0), 0))}
+              <div className="text-xs uppercase font-bold text-slate-600">Volume D'Affari Complessivo</div>
+              <div className="text-2xl font-mono font-black text-amber-600 mt-2">
+                {formatEuro(kpis.emesseTotale + corrispettivi.reduce((acc, c) => {
+                  if (c.isPeriodoInattivo) return acc;
+                  return acc + (c.pagatoContanti || 0) + (c.pagatoElettronico || 0) + (c.ticketPagato || 0);
+                }, 0))}
               </div>
               <div className="text-xs text-slate-500 mt-1">Fatture Emesse + Corrispettivi</div>
             </div>

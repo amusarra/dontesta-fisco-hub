@@ -12,7 +12,9 @@ import {
   Calculator, 
   FileText, 
   Info,
-  Hash
+  Hash,
+  Copy,
+  Check
 } from "lucide-react";
 import { DatiCorrispettivi, TIPO_DISPOSITIVO_MAP, NATURA_IVA_MAP } from "../types";
 
@@ -25,7 +27,8 @@ export default function CorrispettivoDetailModal({
   corrispettivo,
   onClose
 }: CorrispettivoDetailModalProps) {
-  const [activeTab, setActiveTab] = useState<"dispositivo" | "riepilogo" | "finanziario">("dispositivo");
+  const [activeTab, setActiveTab] = useState<"dispositivo" | "riepilogo" | "finanziario" | "xml">("dispositivo");
+  const [xmlCopied, setXmlCopied] = useState(false);
 
   if (!corrispettivo) return null;
 
@@ -56,6 +59,15 @@ export default function CorrispettivoDetailModal({
   };
 
   const deviceLabel = TIPO_DISPOSITIVO_MAP[corrispettivo.tipoDispositivo] || corrispettivo.tipoDispositivo;
+
+  const handleCopyXml = () => {
+    navigator.clipboard.writeText(corrispettivo.rawXml).then(() => {
+      setXmlCopied(true);
+      setTimeout(() => setXmlCopied(false), 2000);
+    }).catch((err) => {
+      console.error("Failed to copy XML:", err);
+    });
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-100/80 backdrop-blur-sm animate-fadeIn select-none">
@@ -131,6 +143,18 @@ export default function CorrispettivoDetailModal({
           >
             <Banknote className="h-4 w-4" />
             <span>3. Finanziario e Incassi</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("xml")}
+            className={`px-4 py-2.5 text-xs font-bold rounded-t-lg transition-all flex items-center gap-2 cursor-pointer border-b-2 ${
+              activeTab === "xml"
+                ? "bg-slate-50 text-blue-600 border-blue-300"
+                : "text-slate-600 hover:text-slate-800 border-transparent"
+            }`}
+          >
+            <FileText className="h-4 w-4" />
+            <span>4. Sorgente XML</span>
           </button>
         </div>
 
@@ -225,7 +249,6 @@ export default function CorrispettivoDetailModal({
                     <tr>
                       <th className="p-3">Aliquota / Natura</th>
                       <th className="p-3 text-right">Ammontare Lordo</th>
-                      <th className="p-3 text-right">Imponibile</th>
                       <th className="p-3 text-right">Imposta</th>
                       <th className="p-3 text-right">Resi</th>
                       <th className="p-3 text-right">Annulli</th>
@@ -239,7 +262,6 @@ export default function CorrispettivoDetailModal({
                           {item.aliquotaIva !== undefined ? `${item.aliquotaIva}%` : item.natura ? NATURA_IVA_MAP[item.natura] || item.natura : "N/D"}
                         </td>
                         <td className="p-3 text-right text-slate-900 font-bold">{formatEuro(item.ammontare)}</td>
-                        <td className="p-3 text-right text-slate-700">{formatEuro(item.imponibileCalcolato)}</td>
                         <td className="p-3 text-right text-blue-600 font-bold">{formatEuro(item.imposta)}</td>
                         <td className="p-3 text-right text-amber-400">{formatEuro(item.totaleAmmontareResi)}</td>
                         <td className="p-3 text-right text-red-400">{formatEuro(item.totaleAmmontareAnnulli)}</td>
@@ -250,7 +272,7 @@ export default function CorrispettivoDetailModal({
                     ))}
                     {corrispettivo.riepilogo.length === 0 && (
                       <tr>
-                        <td colSpan={7} className="p-4 text-center text-slate-500 font-sans">
+                        <td colSpan={6} className="p-4 text-center text-slate-500 font-sans">
                           Nessun elemento di riepilogo IVA presente.
                         </td>
                       </tr>
@@ -260,7 +282,6 @@ export default function CorrispettivoDetailModal({
                     <tr>
                       <td className="p-3 font-sans text-slate-700">TOTALE COMPLESSIVO</td>
                       <td className="p-3 text-right text-emerald-400 font-mono text-sm">{formatEuro(corrispettivo.totaleAmmontare)}</td>
-                      <td className="p-3 text-right text-slate-800 font-mono">{formatEuro(corrispettivo.totaleImponibile)}</td>
                       <td className="p-3 text-right text-blue-600 font-mono">{formatEuro(corrispettivo.totaleImposta)}</td>
                       <td colSpan={3} className="p-3"></td>
                     </tr>
@@ -333,13 +354,58 @@ export default function CorrispettivoDetailModal({
             </div>
           )}
 
+          {/* TAB 4: SORGENTE XML */}
+          {activeTab === "xml" && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-blue-600" />
+                  <h3 className="text-sm font-bold text-slate-800">Codice Sorgente XML</h3>
+                </div>
+                <button
+                  onClick={handleCopyXml}
+                  className={`px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border ${
+                    xmlCopied
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      : "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
+                  }`}
+                >
+                  {xmlCopied ? (
+                    <>
+                      <Check className="h-3.5 w-3.5" />
+                      <span>Copiato!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3.5 w-3.5" />
+                      <span>Copia XML</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <div className="bg-slate-900 border border-slate-700 rounded-lg p-4 overflow-x-auto max-h-[500px] overflow-y-auto">
+                <pre className="text-xs font-mono text-slate-100 leading-relaxed whitespace-pre-wrap break-words select-text">
+                  {corrispettivo.rawXml}
+                </pre>
+              </div>
+
+              <div className="text-xs text-slate-500 flex items-center gap-1.5 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                <Info className="h-4 w-4 text-blue-600 shrink-0" />
+                <span>
+                  Questo è il file XML originale importato. Puoi copiarlo negli appunti usando il pulsante <strong>"Copia XML"</strong> in alto.
+                </span>
+              </div>
+            </div>
+          )}
+
         </div>
 
         {/* MODAL FOOTER */}
         <div className="p-4 border-t border-slate-200 bg-white/90 flex justify-end">
           <button
             onClick={onClose}
-            className="px-5 py-2 bg-slate-50 hover:bg-slate-700 text-slate-800 font-bold text-xs rounded-xl transition-colors cursor-pointer border border-slate-300"
+            className="px-5 py-2 bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold text-xs rounded-xl transition-colors cursor-pointer border border-slate-300"
           >
             Chiudi Dettaglio
           </button>

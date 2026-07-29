@@ -74,7 +74,7 @@ export default function CorrispettiviAnalytics({
       if (!corr.isPeriodoInattivo) {
         mapByDay[dateKey].contanti += corr.pagatoContanti || 0;
         mapByDay[dateKey].elettronico += corr.pagatoElettronico || 0;
-        mapByDay[dateKey].total += corr.totaleAmmontare || 0;
+        mapByDay[dateKey].total += (corr.pagatoContanti || 0) + (corr.pagatoElettronico || 0) + (corr.ticketPagato || 0);
       }
     });
 
@@ -98,7 +98,7 @@ export default function CorrispettiviAnalytics({
           scontrinoMedio: 0
         };
       }
-      mapByDay[dateKey].ammontare += corr.totaleAmmontare || 0;
+      mapByDay[dateKey].ammontare += (corr.pagatoContanti || 0) + (corr.pagatoElettronico || 0) + (corr.ticketPagato || 0);
       mapByDay[dateKey].docs += corr.numeroDocCommerciali || 0;
     });
 
@@ -125,12 +125,12 @@ export default function CorrispettiviAnalytics({
           dayNum,
           isInactive: corr.isPeriodoInattivo,
           countDocs: corr.numeroDocCommerciali || 0,
-          totalGross: corr.totaleAmmontare || 0
+          totalGross: (corr.pagatoContanti || 0) + (corr.pagatoElettronico || 0) + (corr.ticketPagato || 0)
         };
       } else {
         if (corr.isPeriodoInattivo) mapByDay[dateKey].isInactive = true;
         mapByDay[dateKey].countDocs += corr.numeroDocCommerciali || 0;
-        mapByDay[dateKey].totalGross += corr.totaleAmmontare || 0;
+        mapByDay[dateKey].totalGross += (corr.pagatoContanti || 0) + (corr.pagatoElettronico || 0) + (corr.ticketPagato || 0);
       }
     });
 
@@ -156,8 +156,8 @@ export default function CorrispettiviAnalytics({
           </div>
         </div>
 
-        <div className="text-xs text-slate-600 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-300 font-mono">
-          Registri analizzati: <strong className="text-blue-400 font-bold">{filteredCorrispettivi.length}</strong>
+        <div className="text-xs text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-300 font-mono">
+          Registri analizzati: <strong className="text-blue-700 font-bold">{filteredCorrispettivi.length}</strong>
         </div>
       </div>
 

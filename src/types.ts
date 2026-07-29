@@ -93,6 +93,7 @@ export interface DettagliCertificato {
   authorityInfoAccess?: string[];
   soggettoAlternativo?: string[];
   keyUsageDettaglio?: string;
+  qcStatements?: string[];
   infoAggiuntive?: string;
 }
 

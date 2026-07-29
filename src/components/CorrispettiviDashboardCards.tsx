@@ -27,11 +27,10 @@ export default function CorrispettiviDashboardCards({
   };
 
   const metrics = useMemo(() => {
-    let totalIncassati = 0;
     let pagatoElettronico = 0;
     let pagatoContanti = 0;
     let ticketPagato = 0;
-    let totaleImponibile = 0;
+    let totaleAmmontare = 0;
     let totaleImposta = 0;
     let numeroDocCommerciali = 0;
     let periodiInattiviCount = 0;
@@ -40,22 +39,24 @@ export default function CorrispettiviDashboardCards({
       if (corr.isPeriodoInattivo) {
         periodiInattiviCount += 1;
       } else {
-        totalIncassati += corr.totaleAmmontare || 0;
         pagatoElettronico += corr.pagatoElettronico || 0;
         pagatoContanti += corr.pagatoContanti || 0;
         ticketPagato += corr.ticketPagato || 0;
-        totaleImponibile += corr.totaleImponibile || 0;
+        totaleAmmontare += corr.totaleAmmontare || 0;
         totaleImposta += corr.totaleImposta || 0;
         numeroDocCommerciali += corr.numeroDocCommerciali || 0;
       }
     });
+
+    // Totale Incassati = somma dei metodi di pagamento
+    const totalIncassati = pagatoContanti + pagatoElettronico + ticketPagato;
 
     return {
       totalIncassati,
       pagatoElettronico,
       pagatoContanti,
       ticketPagato,
-      totaleImponibile,
+      totaleAmmontare,
       totaleImposta,
       numeroDocCommerciali,
       periodiInattiviCount
@@ -136,9 +137,9 @@ export default function CorrispettiviDashboardCards({
         </div>
         <div className="mt-2 space-y-1.5">
           <div className="flex items-center justify-between text-xs">
-            <span className="text-slate-600">Imponibile:</span>
+            <span className="text-slate-600">Ammontare Totale:</span>
             <span className="font-mono font-bold text-slate-800">
-              {formatEuro(metrics.totaleImponibile)}
+              {formatEuro(metrics.totaleAmmontare)}
             </span>
           </div>
           <div className="flex items-center justify-between text-xs">
