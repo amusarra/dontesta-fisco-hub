@@ -770,41 +770,55 @@ export default function InvoiceViewer({ invoice, onDownloadXml, onShowNotificati
                           </div>
                         </div>
 
-                        {/* Framed Information Box from Screenshot 3 */}
-                        <div className="border border-slate-200 bg-slate-50/50 p-4 rounded text-xs leading-relaxed text-slate-600 font-medium">
-                          <p className="font-bold text-slate-800 mb-1.5">Certificato Qualificato conforme al Regolamento UE N. 910/2014 - eIDAS</p>
-                          <p className="mb-2">Periodo di conservazione delle informazioni di certificazione: 20 anni</p>
-                          <p className="mb-4">
-                            La chiave privata associata al certificato risiede in un dispositivo sicuro conforme al Regolamento (UE) N. 910/2014 (QSCD - Qualified Signature/Seal Creation Device)
-                          </p>
-                          
-                          <div className="space-y-2 mt-4 pt-3 border-t border-slate-200/60">
-                            <div>
-                              <span className="text-[10px] text-slate-400 uppercase font-semibold block mb-0.5">PKI Disclosure Statements (PDS): (it)</span>
-                              <a 
-                                href="https://www.pec.it/repository/arubapec-qualif-pds-it.pdf" 
-                                target="_blank" 
-                                rel="referrer noopener"
-                                className="text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1 font-mono text-[11px]"
-                              >
-                                https://www.pec.it/repository/arubapec-qualif-pds-it.pdf
-                                <ExternalLink className="h-3 w-3 inline shrink-0" />
-                              </a>
-                            </div>
-                            <div>
-                              <span className="text-[10px] text-slate-400 uppercase font-semibold block mb-0.5">PKI Disclosure Statements (PDS): (en)</span>
-                              <a 
-                                href="https://www.pec.it/repository/arubapec-qualif-pds-en.pdf" 
-                                target="_blank" 
-                                rel="referrer noopener"
-                                className="text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1 font-mono text-[11px]"
-                              >
-                                https://www.pec.it/repository/arubapec-qualif-pds-en.pdf
-                                <ExternalLink className="h-3 w-3 inline shrink-0" />
-                              </a>
+                        {/* Framed Information Box with dynamic QC Statements */}
+                        {invoice.firmaElettronica?.certificato.qcStatements && invoice.firmaElettronica.certificato.qcStatements.length > 0 ? (
+                          <div className="border border-slate-200 bg-slate-50/50 p-4 rounded text-xs leading-relaxed text-slate-600 font-medium">
+                            <p className="font-bold text-slate-800 mb-3">Qualificazioni del Certificato (qcStatements)</p>
+                            <div className="space-y-2">
+                              {invoice.firmaElettronica.certificato.qcStatements.map((statement, idx) => (
+                                <div key={idx} className="flex items-start gap-2">
+                                  <span className="text-blue-600 mt-0.5">•</span>
+                                  <span className="text-slate-700">{statement}</span>
+                                </div>
+                              ))}
                             </div>
                           </div>
-                        </div>
+                        ) : (
+                          <div className="border border-slate-200 bg-slate-50/50 p-4 rounded text-xs leading-relaxed text-slate-600 font-medium">
+                            <p className="font-bold text-slate-800 mb-1.5">Certificato Qualificato conforme al Regolamento UE N. 910/2014 - eIDAS</p>
+                            <p className="mb-2">Periodo di conservazione delle informazioni di certificazione: 20 anni</p>
+                            <p className="mb-4">
+                              La chiave privata associata al certificato risiede in un dispositivo sicuro conforme al Regolamento (UE) N. 910/2014 (QSCD - Qualified Signature/Seal Creation Device)
+                            </p>
+                            
+                            <div className="space-y-2 mt-4 pt-3 border-t border-slate-200/60">
+                              <div>
+                                <span className="text-[10px] text-slate-400 uppercase font-semibold block mb-0.5">PKI Disclosure Statements (PDS): (it)</span>
+                                <a 
+                                  href="https://www.pec.it/repository/arubapec-qualif-pds-it.pdf" 
+                                  target="_blank" 
+                                  rel="referrer noopener"
+                                  className="text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1 font-mono text-[11px]"
+                                >
+                                  https://www.pec.it/repository/arubapec-qualif-pds-it.pdf
+                                  <ExternalLink className="h-3 w-3 inline shrink-0" />
+                                </a>
+                              </div>
+                              <div>
+                                <span className="text-[10px] text-slate-400 uppercase font-semibold block mb-0.5">PKI Disclosure Statements (PDS): (en)</span>
+                                <a 
+                                  href="https://www.pec.it/repository/arubapec-qualif-pds-en.pdf" 
+                                  target="_blank" 
+                                  rel="referrer noopener"
+                                  className="text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1 font-mono text-[11px]"
+                                >
+                                  https://www.pec.it/repository/arubapec-qualif-pds-en.pdf
+                                  <ExternalLink className="h-3 w-3 inline shrink-0" />
+                                </a>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
 

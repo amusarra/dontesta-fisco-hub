@@ -13,9 +13,10 @@
 import { openDB, IDBPDatabase } from "idb";
 
 const DB_NAME = "fattura_pa_reader_db";
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 const STORE_NAME = "invoices";
 const COMPANY_STORE_NAME = "companies";
+const CORRISPETTIVI_STORE_NAME = "corrispettivi";
 
 // Legacy localStorage key used before this migration
 const LS_LEGACY_KEY = "dontesta_uploaded_invoices";
@@ -27,10 +28,20 @@ export interface InvoiceRecord {
   rawP7mBase64?: string;
 }
 
+export interface CorrispettivoRecord {
+  id: string;       // equals fileName — used as keyPath
+  fileName: string;
+  rawXml: string;
+}
+
 type FatturaDB = {
   [STORE_NAME]: {
     key: string;
     value: InvoiceRecord;
+  };
+  [CORRISPETTIVI_STORE_NAME]: {
+    key: string;
+    value: CorrispettivoRecord;
   };
 };
 
@@ -46,6 +57,9 @@ async function getDB(): Promise<IDBPDatabase<any>> {
       }
       if (!db.objectStoreNames.contains(COMPANY_STORE_NAME)) {
         db.createObjectStore(COMPANY_STORE_NAME, { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains(CORRISPETTIVI_STORE_NAME)) {
+        db.createObjectStore(CORRISPETTIVI_STORE_NAME, { keyPath: "id" });
       }
     },
   });
@@ -92,6 +106,41 @@ export async function clearInvoicesDB(): Promise<void> {
 }
 
 /**
+ * Loads all corrispettivi records from IndexedDB.
+ */
+export async function loadCorrispettiviFromDB(): Promise<CorrispettivoRecord[]> {
+  const db = await getDB();
+  return db.getAll(CORRISPETTIVI_STORE_NAME);
+}
+
+/**
+ * Persists the full corrispettivi list to IndexedDB.
+ */
+export async function saveCorrispettiviToDB(
+  corrispettivi: { fileName: string; rawXml: string }[]
+): Promise<void> {
+  const db = await getDB();
+  const tx = db.transaction(CORRISPETTIVI_STORE_NAME, "readwrite");
+  await tx.store.clear();
+  for (const corr of corrispettivi) {
+    await tx.store.put({
+      id: corr.fileName,
+      fileName: corr.fileName,
+      rawXml: corr.rawXml
+    });
+  }
+  await tx.done;
+}
+
+/**
+ * Deletes all records from the corrispettivi store.
+ */
+export async function clearCorrispettiviDB(): Promise<void> {
+  const db = await getDB();
+  await db.clear(CORRISPETTIVI_STORE_NAME);
+}
+
+/**
  * One-shot migration from localStorage to IndexedDB.
  *
  * If the legacy key `dontesta_uploaded_invoices` is present in localStorage,
@@ -117,3 +166,4 @@ export async function migrateFromLocalStorage(): Promise<void> {
     localStorage.removeItem(LS_LEGACY_KEY);
   }
 }
+

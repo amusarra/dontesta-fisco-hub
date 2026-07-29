@@ -38,11 +38,14 @@ import AnalyticsDashboard from "./components/AnalyticsDashboard";
 import DatabaseStatus from "./components/DatabaseStatus";
 import MultiSelect from "./components/MultiSelect";
 import CompanyModal from "./components/CompanyModal";
+import CorrispettiviList from "./components/CorrispettiviList";
 import { parseFatturaXML, validateFatturaXML, extractXmlFromP7m, decodeXmlBytes } from "./utils/parser";
-import { loadInvoicesFromDB, saveInvoicesToDB, clearInvoicesDB, migrateFromLocalStorage } from "./utils/db";
+import { validateCorrispettivoXML, parseCorrispettivoXML } from "./utils/corrispettiviParser";
+import { loadInvoicesFromDB, saveInvoicesToDB, clearInvoicesDB, migrateFromLocalStorage, loadCorrispettiviFromDB, saveCorrispettiviToDB, clearCorrispettiviDB } from "./utils/db";
 import { loadCompaniesFromDB, saveCompanyToDB, deleteCompanyFromDB, getActiveCompanyIdFromLS, setActiveCompanyIdInLS, DUMMY_GUEST_COMPANY } from "./utils/companyDb";
-import { FatturaElettronica, Azienda } from "./types";
+import { FatturaElettronica, DatiCorrispettivi, Azienda } from "./types";
 import appMetadata from "../metadata.json";
+
 
 interface Toast {
   id: string;
@@ -102,8 +105,10 @@ function deduplicateInvoices(list: FatturaElettronica[]): FatturaElettronica[] {
 
 export default function App() {
   const [invoices, setInvoices] = useState<FatturaElettronica[]>([]);
+  const [corrispettivi, setCorrispettivi] = useState<DatiCorrispettivi[]>([]);
   const [selectedInvoice, setSelectedInvoice] = useState<FatturaElettronica | null>(null);
-  const [activeView, setActiveView] = useState<"list" | "charts">("list");
+  const [activeView, setActiveView] = useState<"list" | "corrispettivi" | "charts">("list");
+
   const [isSidebarExpanded, setIsSidebarExpanded] = useState<boolean>(() => {
     return localStorage.getItem("dontesta_sidebar_expanded") !== "false";
   });
@@ -323,6 +328,7 @@ export default function App() {
       }
       
       const newInvoices: FatturaElettronica[] = [];
+      const newCorrispettivi: DatiCorrispettivi[] = [];
       const errors: string[] = [];
       
       setIsScanning(true);
@@ -348,15 +354,19 @@ export default function App() {
           const isP7m = lowerName.endsWith(".p7m");
           const xmlString = isP7m ? extractXmlFromP7m(bytes) : decodeXmlBytes(bytes);
 
-          // Validate against FatturaPA XSD structural rules before parsing
-          const validation = validateFatturaXML(xmlString);
-          if (!validation.valid) {
-            errors.push(`File "${fileName}" non conforme allo schema FatturaPA: ${validation.error}`);
-            continue;
-          }
+          // Auto-detect DatiCorrispettivi vs FatturaElettronica
+          const isCorrispettivo = xmlString.includes("DatiCorrispettivi") || validateCorrispettivoXML(xmlString).valid;
+          const isFattura = xmlString.includes("FatturaElettronica") || validateFatturaXML(xmlString).valid;
 
-          const parsed = parseFatturaXML(xmlString, fileName, isP7m ? bytes : undefined);
-          newInvoices.push(isP7m ? { ...parsed, rawP7mBase64: bytesToBase64(bytes) } : parsed);
+          if (isCorrispettivo) {
+            const parsedCorr = parseCorrispettivoXML(xmlString, fileName);
+            newCorrispettivi.push(parsedCorr);
+          } else if (isFattura) {
+            const parsed = parseFatturaXML(xmlString, fileName, isP7m ? bytes : undefined);
+            newInvoices.push(isP7m ? { ...parsed, rawP7mBase64: bytesToBase64(bytes) } : parsed);
+          } else {
+            errors.push(`File "${fileName}" non conforme agli schemi FatturaPA o DatiCorrispettivi.`);
+          }
         } catch (err: any) {
           console.error(err);
           errors.push(`Errore nel file "${fileName}": XML corrotto o non valido.`);
@@ -369,18 +379,31 @@ export default function App() {
         setInvoices((prev) => {
           const filteredPrev = prev.filter((p) => !newInvoices.some((n) => n.id === p.id));
           const updated = deduplicateInvoices([...filteredPrev, ...newInvoices]);
-          // Persist asynchronously — no UI blocking
           saveInvoicesToDB(updated.map((u) => ({ fileName: u.fileName, rawXml: u.rawXml, rawP7mBase64: u.rawP7mBase64 }))).catch(
             (err) => console.error("[DB] Errore nel salvataggio fatture (cartella):", err)
           );
           return updated;
         });
-        
         setSelectedInvoice(newInvoices[0]);
-        addToast(`[Cartella] Caricate con successo ${newInvoices.length} fatture dalla cartella!`, "success");
-      } else {
-        addToast("[Cartella] Nessuna fattura valida (.xml o .p7m) trovata nella cartella.", "info");
       }
+
+      if (newCorrispettivi.length > 0) {
+        setCorrispettivi((prev) => {
+          const filteredPrev = prev.filter((p) => !newCorrispettivi.some((n) => n.id === p.id));
+          const updated = [...filteredPrev, ...newCorrispettivi];
+          saveCorrispettiviToDB(updated.map((u) => ({ fileName: u.fileName, rawXml: u.rawXml }))).catch(
+            (err) => console.error("[DB] Errore nel salvataggio corrispettivi (cartella):", err)
+          );
+          return updated;
+        });
+      }
+
+      if (newInvoices.length > 0 || newCorrispettivi.length > 0) {
+        addToast(`[Cartella] Caricate ${newInvoices.length} fatture e ${newCorrispettivi.length} corrispettivi!`, "success");
+      } else {
+        addToast("[Cartella] Nessun file XML o P7M valido trovato nella cartella.", "info");
+      }
+
       
       if (errors.length > 0) {
         addToast(`${errors.length} file hanno riscontrato errori.`, "error");
@@ -474,19 +497,30 @@ export default function App() {
           setSelectedInvoice(deduplicated[0]);
           addToast(`Caricate ${deduplicated.length} fatture salvate.`, "success");
         } else {
-          // Startup with empty data by default (no demo data loaded)
           setInvoices([]);
           setSelectedInvoice(null);
         }
+
+        // Load Corrispettivi from DB
+        const corrRecords = await loadCorrispettiviFromDB();
+        if (corrRecords.length > 0) {
+          const loadedCorr = corrRecords.map((c) => parseCorrispettivoXML(c.rawXml, c.fileName));
+          setCorrispettivi(loadedCorr);
+        } else {
+          setCorrispettivi([]);
+        }
       } catch (err) {
-        console.error("Errore nel caricamento delle fatture da IndexedDB:", err);
+        console.error("Errore nel caricamento dei dati da IndexedDB:", err);
         setInvoices([]);
         setSelectedInvoice(null);
+        setCorrispettivi([]);
       }
     };
 
     initDB();
   }, []);
+
+
 
   // Calculate dynamic years available in loaded invoices
   const yearsList = useMemo(() => {
@@ -517,6 +551,7 @@ export default function App() {
   // Process files (XML / P7M) and parse them
   const handleUploadInvoices = async (files: FileList) => {
     const newInvoices: FatturaElettronica[] = [];
+    const newCorrispettivi: DatiCorrispettivi[] = [];
     const errors: string[] = [];
 
     for (let i = 0; i < files.length; i++) {
@@ -541,15 +576,19 @@ export default function App() {
         const isP7m = lowerName.endsWith(".p7m");
         const xmlString = isP7m ? extractXmlFromP7m(bytes) : decodeXmlBytes(bytes);
 
-        // Validate against FatturaPA XSD structural rules before parsing
-        const validation = validateFatturaXML(xmlString);
-        if (!validation.valid) {
-          errors.push(`File "${fileName}" non conforme allo schema FatturaPA: ${validation.error}`);
-          continue;
-        }
+        // Auto-detect DatiCorrispettivi vs FatturaElettronica
+        const isCorrispettivo = xmlString.includes("DatiCorrispettivi") || validateCorrispettivoXML(xmlString).valid;
+        const isFattura = xmlString.includes("FatturaElettronica") || validateFatturaXML(xmlString).valid;
 
-        const parsed = parseFatturaXML(xmlString, fileName, isP7m ? bytes : undefined);
-        newInvoices.push(isP7m ? { ...parsed, rawP7mBase64: bytesToBase64(bytes) } : parsed);
+        if (isCorrispettivo) {
+          const parsedCorr = parseCorrispettivoXML(xmlString, fileName);
+          newCorrispettivi.push(parsedCorr);
+        } else if (isFattura) {
+          const parsed = parseFatturaXML(xmlString, fileName, isP7m ? bytes : undefined);
+          newInvoices.push(isP7m ? { ...parsed, rawP7mBase64: bytesToBase64(bytes) } : parsed);
+        } else {
+          errors.push(`File "${fileName}": formato XML non riconosciuto (non è nè FatturaPA nè DatiCorrispettivi).`);
+        }
       } catch (err: any) {
         console.error(err);
         errors.push(`Errore nel file "${fileName}": XML corrotto o schema non valido.`);
@@ -558,28 +597,75 @@ export default function App() {
 
     if (newInvoices.length > 0) {
       setInvoices((prev) => {
-        // Prevent duplicate IDs (combination of partitaIva, invoice number, date)
         const filteredPrev = prev.filter((p) => !newInvoices.some((n) => n.id === p.id));
         const updated = deduplicateInvoices([...filteredPrev, ...newInvoices]);
-
-        // Save raw XML files in IndexedDB to survive browser reloads
         saveInvoicesToDB(updated.map((u) => ({ fileName: u.fileName, rawXml: u.rawXml, rawP7mBase64: u.rawP7mBase64 }))).catch(
           (err) => console.error("[DB] Errore nel salvataggio fatture (upload):", err)
         );
         return updated;
       });
-
       setSelectedInvoice(newInvoices[0]);
-      addToast(`Caricate con successo ${newInvoices.length} fatture!`, "success");
     }
+
+    if (newCorrispettivi.length > 0) {
+      setCorrispettivi((prev) => {
+        const filteredPrev = prev.filter((p) => !newCorrispettivi.some((n) => n.id === p.id));
+        const updated = [...filteredPrev, ...newCorrispettivi];
+        saveCorrispettiviToDB(updated.map((u) => ({ fileName: u.fileName, rawXml: u.rawXml }))).catch(
+          (err) => console.error("[DB] Errore nel salvataggio corrispettivi (upload):", err)
+        );
+        return updated;
+      });
+    }
+
+    if (newInvoices.length > 0 || newCorrispettivi.length > 0) {
+      addToast(`Caricati con successo ${newInvoices.length} fatture e ${newCorrispettivi.length} corrispettivi!`, "success");
+    }
+
 
     if (errors.length > 0) {
       errors.forEach((err) => addToast(err, "error"));
     }
   };
 
+  // Delete single Corrispettivo
+  const handleDeleteCorrispettivo = (id: string) => {
+    triggerConfirm(
+      "Elimina Corrispettivo",
+      `Sei sicuro di voler eliminare il corrispettivo "${id}"?`,
+      () => {
+        setCorrispettivi((prev) => {
+          const updated = prev.filter((c) => c.id !== id);
+          saveCorrispettiviToDB(updated.map((u) => ({ fileName: u.fileName, rawXml: u.rawXml }))).catch(
+            (err) => console.error("[DB] Errore nel salvataggio corrispettivi:", err)
+          );
+          return updated;
+        });
+        addToast("Corrispettivo eliminato.", "info");
+      },
+      "Elimina",
+      true
+    );
+  };
+
+  // Clear all corrispettivi
+  const handleClearAllCorrispettivi = () => {
+    triggerConfirm(
+      "Svuota Corrispettivi",
+      "Sei sicuro di voler eliminare definitivamente tutti i dati dei corrispettivi salvati?",
+      () => {
+        setCorrispettivi([]);
+        clearCorrispettiviDB().catch((err) => console.error("[DB] Errore eliminazione corrispettivi DB:", err));
+        addToast("Tutti i corrispettivi sono stati eliminati.", "info");
+      },
+      "Svuota",
+      true
+    );
+  };
+
   // Clear all database files
   const handleResetDatabase = () => {
+
     triggerConfirm(
       "Elimina Tutti i Dati",
       "Sei sicuro di voler eliminare definitivamente tutte le fatture caricate? Questa operazione non può essere annullata.",
@@ -1090,33 +1176,66 @@ export default function App() {
             </span>
           </button>
 
-          {/* Dashboard Toggle Button */}
-          <button
-            type="button"
-            onClick={() => {
-              if (activeCompany?.isDummy) return; // Non permettere switch in modalità Guest
-              setActiveView(activeView === "list" ? "charts" : "list");
-            }}
-            disabled={activeCompany?.isDummy}
-            className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-xs font-bold border shrink-0 ${
-              activeCompany?.isDummy
-                ? "bg-slate-200 text-slate-400 border-slate-300 cursor-not-allowed opacity-60"
-                : activeView === "charts" 
-                  ? "bg-blue-600 text-white border-blue-500 hover:bg-blue-500 shadow-sm font-extrabold cursor-pointer active:scale-95" 
-                  : "bg-slate-800 text-blue-400 border-slate-700 hover:text-white hover:bg-slate-700 cursor-pointer active:scale-95"
-            }`}
-            title={
-              activeCompany?.isDummy 
-                ? "Grafici e statistiche disponibili solo con un'azienda configurata" 
-                : activeView === "charts" 
-                  ? "Mostra elenco fatture" 
+          {/* View Switchers: Fatture vs Corrispettivi vs Grafici */}
+          <div className="flex items-center gap-1 bg-slate-900/60 p-1 rounded-lg border border-slate-800">
+            <button
+              type="button"
+              onClick={() => setActiveView("list")}
+              className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 text-xs font-bold cursor-pointer active:scale-95 shrink-0 ${
+                activeView === "list"
+                  ? "bg-blue-600 text-white shadow-xs"
+                  : "text-slate-300 hover:text-white hover:bg-slate-800"
+              }`}
+              title="Mostra fatture elettroniche"
+            >
+              <FileCheck2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Fatture</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveView("corrispettivi")}
+              className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 text-xs font-bold cursor-pointer active:scale-95 shrink-0 ${
+                activeView === "corrispettivi"
+                  ? "bg-blue-600 text-white shadow-xs"
+                  : "text-slate-300 hover:text-white hover:bg-slate-800"
+              }`}
+              title="Mostra dati corrispettivi telematici"
+            >
+              <Sparkles className="h-4 w-4 text-amber-400" />
+              <span className="hidden sm:inline">Corrispettivi</span>
+              {corrispettivi.length > 0 && (
+                <span className="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded font-mono font-bold">
+                  {corrispettivi.length}
+                </span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (activeCompany?.isDummy) return;
+                setActiveView("charts");
+              }}
+              disabled={activeCompany?.isDummy}
+              className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 text-xs font-bold shrink-0 ${
+                activeCompany?.isDummy
+                  ? "text-slate-500 cursor-not-allowed opacity-50"
+                  : activeView === "charts"
+                    ? "bg-blue-600 text-white shadow-xs cursor-pointer active:scale-95"
+                    : "text-slate-300 hover:text-white hover:bg-slate-800 cursor-pointer active:scale-95"
+              }`}
+              title={
+                activeCompany?.isDummy
+                  ? "Grafici e statistiche disponibili solo con un'azienda configurata"
                   : "Mostra statistiche e grafici analitici"
-            }
-            id="charts-view-toggle-btn"
-          >
-            <BarChart3 className="h-4 w-4" />
-            <span className="hidden sm:inline">Grafici & Statistiche</span>
-          </button>
+              }
+            >
+              <BarChart3 className="h-4 w-4" />
+              <span className="hidden sm:inline">Grafici</span>
+            </button>
+          </div>
+
         </div>
 
         {/* YEAR & MONTH SELECTOR FILTER - ALWAYS VISIBLE */}
@@ -1214,17 +1333,30 @@ export default function App() {
         </div>
       </div>
 
-      {/* 3-COLUMN LAYOUT BODY OR ANALYTICS DASHBOARD */}
+      {/* MAIN VIEW CONTENT: CHARTS, CORRISPETTIVI, OR INVOICES */}
       {activeView === "charts" ? (
         <AnalyticsDashboard
           invoices={invoices}
+          corrispettivi={corrispettivi}
           selectedYears={selectedYears}
           selectedMonths={selectedMonths}
           onClose={() => setActiveView("list")}
           onShowNotification={addToast}
           activeCompany={activeCompany}
         />
+      ) : activeView === "corrispettivi" ? (
+        <CorrispettiviList
+          corrispettivi={corrispettivi}
+          selectedYears={selectedYears}
+          selectedMonths={selectedMonths}
+          onUploadCorrispettivi={handleUploadInvoices}
+          onDeleteCorrispettivo={handleDeleteCorrispettivo}
+          onClearAllCorrispettivi={handleClearAllCorrispettivi}
+          activeCompany={activeCompany}
+          onShowNotification={addToast}
+        />
       ) : (
+
         <main className="flex-1 flex overflow-hidden min-h-0 print:overflow-visible print:h-auto" id="asso-workspace">
           {/* Column 1: Sidebar (Left Filter Lists) */}
           {isSidebarExpanded && (

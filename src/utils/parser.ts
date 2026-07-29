@@ -1121,6 +1121,55 @@ function formatCertificateVersion(cert: forge.pki.Certificate): string {
   return `V${rawVersion}`;
 }
 
+function extractQcStatements(cert: forge.pki.Certificate): string[] {
+  // qcStatements extension OID: 1.3.6.1.5.5.7.1.3
+  const qcStatementsOid = "1.3.6.1.5.5.7.1.3";
+  
+  const ext = cert.extensions?.find((e: any) => e.id === qcStatementsOid);
+  if (!ext) return [];
+
+  const asn1 = parseExtensionAsn1(ext);
+  if (!asn1) return [];
+
+  const statements: string[] = [];
+  const oidDescriptions: Record<string, string> = {
+    "0.4.0.1862.1.1": "QCP-n (Qualified Certificate Policy - natural person)",
+    "0.4.0.1862.1.2": "QCP-l (Qualified Certificate Policy - legal person)",
+    "0.4.0.1862.1.3": "QCP-n-qscd (QC for natural person + QSCD)",
+    "0.4.0.1862.1.4": "QCP-l-qscd (QC for legal person + QSCD)",
+    "0.4.0.1862.1.6": "QCP-w (Web authentication)",
+    "0.4.0.194112.1.0": "QC-SSCD (Qualified Signature Creation Device)",
+    "0.4.0.194112.1.1": "QC Retention (Retention period defined)",
+    "0.4.0.194112.1.2": "QC Compliance (Compliance with qualified certificate requirements)",
+    "0.4.0.194112.1.3": "QC SSCD (Secure Signature Creation Device)",
+    "0.4.0.194112.1.4": "QC Type (Type of qualified certificate)",
+    "0.4.0.19122.1.1": "QCP-public-with-sscd",
+    "0.4.0.19122.1.2": "QC Statement"
+  };
+
+  const walk = (node: any) => {
+    if (!node) return;
+    
+    // Look for OID values in the ASN.1 structure
+    if (node.tagClass === 0 && node.type === 6) { // OBJECT IDENTIFIER
+      try {
+        const oid = forge.asn1.derToOid(node.value);
+        const description = oidDescriptions[oid] || oid;
+        statements.push(description);
+      } catch {
+        // Ignore invalid OIDs
+      }
+    }
+    
+    if (Array.isArray(node.value)) {
+      node.value.forEach(walk);
+    }
+  };
+
+  walk(asn1);
+  return Array.from(new Set(statements));
+}
+
 function buildFallbackFirmaElettronica(cedente: Soggetto, dataFattura: string, id: string): FirmaElettronica {
   const fallbackSigner =
     cedente.anagrafica.denominazione ||
@@ -1178,6 +1227,7 @@ function generateFirmaElettronica(p7mBytes: Uint8Array | undefined, cedente: Sog
   const algoritmoFirma = formatSignatureAlgorithm(cert);
   const algoritmoChiavePubblica = formatPublicKeyAlgorithm(cert);
   const versioneCertificato = formatCertificateVersion(cert);
+  const qcStatements = extractQcStatements(cert);
 
   const now = new Date();
   const status: "VALIDA" | "SCADUTA" =
@@ -1202,6 +1252,7 @@ function generateFirmaElettronica(p7mBytes: Uint8Array | undefined, cedente: Sog
       authorityInfoAccess: authorityInfoAccess.length > 0 ? authorityInfoAccess : undefined,
       soggettoAlternativo: soggettoAlternativo.length > 0 ? soggettoAlternativo : undefined,
       keyUsageDettaglio,
+      qcStatements: qcStatements.length > 0 ? qcStatements : undefined,
       infoAggiuntive: fallback.certificato.infoAggiuntive
     }
   };
