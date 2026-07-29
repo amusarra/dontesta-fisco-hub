@@ -195,3 +195,77 @@ export const MODALITA_PAGAMENTO_MAP: Record<string, string> = {
   "MP21": "MP21 Sepa Direct Debit B2B",
   "MP22": "MP22 Trattenuta previdenziale"
 };
+
+/**
+ * Types representing Agenzia delle Entrate Dati Corrispettivi (XSD COR10)
+ */
+
+export interface RiepilogoCorrispettivo {
+  aliquotaIva?: number;
+  imposta?: number;
+  natura?: string;
+  ammontare: number;
+  importoParziale?: number;
+  totaleAmmontareResi?: number;
+  totaleAmmontareAnnulli?: number;
+  rifNormativo?: string;
+  imponibileCalcolato?: number;
+}
+
+export interface DatiCorrispettivi {
+  id: string; // fileName or unique key
+  fileName: string;
+  rawXml: string;
+  versione: string; // e.g. "COR10"
+  
+  // Trasmissione
+  progressivo: number | string;
+  formato: string;
+  tipoDispositivo: string; // DA, MC, RT, DM, DC
+  idDispositivo: string;
+  geoLocalizzazione?: { lat: number; long: number };
+  pivaEsercente: string;
+  cfEsercente?: string;
+  dataOraTrasmissione?: string;
+  
+  // Rilevazione
+  dataOraRilevazione: string; // YYYY-MM-DDTHH:mm:ss
+  dataRilevazione: string; // YYYY-MM-DD
+  
+  // Periodo Inattivo
+  isPeriodoInattivo: boolean;
+  periodoInattivoDal?: string;
+  periodoInattivoAl?: string;
+  
+  // Riepilogo
+  riepilogo: RiepilogoCorrispettivo[];
+  
+  // Totali
+  totaleAmmontare: number;
+  totaleImposta: number;
+  totaleImponibile: number;
+  numeroDocCommerciali: number;
+  pagatoContanti: number;
+  pagatoElettronico: number;
+  ticketPagato: number;
+  numeroTicket?: number;
+  scontoApagare: number;
+}
+
+export const TIPO_DISPOSITIVO_MAP: Record<string, string> = {
+  "DA": "Distributore Automatico (DA)",
+  "MC": "Multi Cassa (MC)",
+  "RT": "Registratore Telematico (RT)",
+  "DM": "Dispositivo Multimediale (DM)",
+  "DC": "Documento Commerciale (DC)"
+};
+
+export const NATURA_IVA_MAP: Record<string, string> = {
+  "N1": "N1 - Escluse ex art. 15",
+  "N2": "N2 - Non soggette",
+  "N3": "N3 - Non imponibili",
+  "N4": "N4 - Esenti",
+  "N5": "N5 - Regime del margine",
+  "N6": "N6 - Altro non IVA"
+};
+

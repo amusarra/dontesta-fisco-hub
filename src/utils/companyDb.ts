@@ -6,7 +6,7 @@ import { openDB, IDBPDatabase } from "idb";
 import { Azienda, FatturaElettronica, InvoiceDirection } from "../types";
 
 const DB_NAME = "fattura_pa_reader_db";
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 const COMPANY_STORE = "companies";
 const LS_ACTIVE_COMPANY_KEY = "dontesta_active_company_id";
 
@@ -31,6 +31,9 @@ async function getDB(): Promise<IDBPDatabase<any>> {
       }
       if (!db.objectStoreNames.contains(COMPANY_STORE)) {
         db.createObjectStore(COMPANY_STORE, { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains("corrispettivi")) {
+        db.createObjectStore("corrispettivi", { keyPath: "id" });
       }
     },
   });

@@ -29,18 +29,21 @@ import {
   Tooltip,
   Legend
 } from "recharts";
-import { FatturaElettronica, TIPO_DOCUMENTO_MAP, MODALITA_PAGAMENTO_MAP, Azienda } from "../types";
+import { FatturaElettronica, DatiCorrispettivi, TIPO_DOCUMENTO_MAP, MODALITA_PAGAMENTO_MAP, Azienda } from "../types";
 import { getInvoiceDirection } from "../utils/companyDb";
+import CorrispettiviAnalytics from "./CorrispettiviAnalytics";
 import html2canvas from "html2canvas-pro";
 
 interface AnalyticsDashboardProps {
   invoices: FatturaElettronica[];
+  corrispettivi?: DatiCorrispettivi[];
   selectedYears: string[];
   selectedMonths: string[];
   onClose: () => void;
   onShowNotification?: (message: string, type: "success" | "error" | "info") => void;
   activeCompany?: Azienda | null;
 }
+
 
 const COLORS = ["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#14B8A6", "#6366F1"];
 
@@ -51,14 +54,17 @@ const MONTH_NAMES = [
 
 export default function AnalyticsDashboard({
   invoices,
+  corrispettivi = [],
   selectedYears,
   selectedMonths,
   onClose,
   onShowNotification,
   activeCompany
 }: AnalyticsDashboardProps) {
+  const [analyticsTab, setAnalyticsTab] = React.useState<"fatture" | "corrispettivi" | "unificata">("fatture");
 
   // Format currency in Italian style
+
   const formatEuro = (val: number) => {
     return new Intl.NumberFormat("it-IT", {
       style: "currency",
@@ -485,10 +491,103 @@ export default function AnalyticsDashboard({
         </button>
       </div>
 
-      {/* KPI METRICS GRID */}
+      {/* SUB-NAVIGATION TABS FOR ANALYTICS */}
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+        <button
+          onClick={() => setAnalyticsTab("fatture")}
+          className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2 cursor-pointer ${
+            analyticsTab === "fatture"
+              ? "bg-blue-600 text-white shadow-xs"
+              : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
+          }`}
+        >
+          <FileText className="h-4 w-4" />
+          <span>Analisi Fatture Elettroniche</span>
+        </button>
+
+        <button
+          onClick={() => setAnalyticsTab("corrispettivi")}
+          className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2 cursor-pointer ${
+            analyticsTab === "corrispettivi"
+              ? "bg-blue-600 text-white shadow-xs"
+              : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
+          }`}
+        >
+          <Receipt className="h-4 w-4" />
+          <span>Analisi Dati Corrispettivi</span>
+        </button>
+
+        <button
+          onClick={() => setAnalyticsTab("unificata")}
+          className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2 cursor-pointer ${
+            analyticsTab === "unificata"
+              ? "bg-blue-600 text-white shadow-xs"
+              : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
+          }`}
+        >
+          <BarChart2 className="h-4 w-4" />
+          <span>Panoramica Unificata (Fatture + Corrispettivi)</span>
+        </button>
+      </div>
+
+      {/* CORRISPETTIVI TAB CONTENT */}
+      {analyticsTab === "corrispettivi" && (
+        <div className="bg-white text-slate-900 p-6 rounded-sm shadow-xl">
+          <CorrispettiviAnalytics
+            corrispettivi={corrispettivi}
+            selectedYears={selectedYears}
+            selectedMonths={selectedMonths}
+          />
+        </div>
+      )}
+
+      {/* PANORAMICA UNIFICATA TAB CONTENT */}
+      {analyticsTab === "unificata" && (
+        <div className="bg-white text-slate-900 p-6 rounded-sm shadow-xl space-y-6">
+          <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+            <BarChart2 className="h-5 w-5 text-blue-400" />
+            Panoramica Unificata Incassi & Fatturato
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-slate-50 p-4 rounded-sm border border-slate-200">
+              <div className="text-xs uppercase font-bold text-slate-400">Fatturato Fatture Emesse</div>
+              <div className="text-2xl font-mono font-bold text-blue-400 mt-2">{formatEuro(kpis.emesseTotale)}</div>
+              <div className="text-xs text-slate-500 mt-1">{kpis.emesseCount} Fatture Emesse</div>
+            </div>
+
+            <div className="bg-slate-50 p-4 rounded-sm border border-slate-200">
+              <div className="text-xs uppercase font-bold text-slate-400">Totale Incassi Corrispettivi</div>
+              <div className="text-2xl font-mono font-bold text-emerald-400 mt-2">
+                {formatEuro(corrispettivi.reduce((acc, c) => acc + (c.isPeriodoInattivo ? 0 : c.totaleAmmontare || 0), 0))}
+              </div>
+              <div className="text-xs text-slate-500 mt-1">{corrispettivi.length} Registri Corrispettivi</div>
+            </div>
+
+            <div className="bg-slate-50 p-4 rounded-sm border border-slate-200">
+              <div className="text-xs uppercase font-bold text-slate-400">Volume D'Affari Complessivo</div>
+              <div className="text-2xl font-mono font-black text-amber-400 mt-2">
+                {formatEuro(kpis.emesseTotale + corrispettivi.reduce((acc, c) => acc + (c.isPeriodoInattivo ? 0 : c.totaleAmmontare || 0), 0))}
+              </div>
+              <div className="text-xs text-slate-500 mt-1">Fatture Emesse + Corrispettivi</div>
+            </div>
+          </div>
+
+          <CorrispettiviAnalytics
+            corrispettivi={corrispettivi}
+            selectedYears={selectedYears}
+            selectedMonths={selectedMonths}
+          />
+        </div>
+      )}
+
+      {/* FATTURE TAB CONTENT */}
+      {analyticsTab === "fatture" && (
+        <div className="flex flex-col gap-6">
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 shrink-0">
         {/* KPI 1: Total Volume */}
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+        <div className="bg-white p-4 rounded-sm border border-slate-200 shadow-sm flex items-center gap-4">
           <div className="p-3 bg-blue-50 text-blue-600 rounded-lg shrink-0">
             <DollarSign className="h-5 w-5" />
           </div>
@@ -500,7 +599,7 @@ export default function AnalyticsDashboard({
         </div>
 
         {/* KPI 2: Taxable */}
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+        <div className="bg-white p-4 rounded-sm border border-slate-200 shadow-sm flex items-center gap-4">
           <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg shrink-0">
             <TrendingUp className="h-5 w-5" />
           </div>
@@ -512,7 +611,7 @@ export default function AnalyticsDashboard({
         </div>
 
         {/* KPI 3: Total VAT/Tax */}
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+        <div className="bg-white p-4 rounded-sm border border-slate-200 shadow-sm flex items-center gap-4">
           <div className="p-3 bg-amber-50 text-amber-600 rounded-lg shrink-0">
             <Receipt className="h-5 w-5" />
           </div>
@@ -525,7 +624,7 @@ export default function AnalyticsDashboard({
 
         {/* KPI 4: Emesse (if active company set) */}
         {activeCompany && !activeCompany.isDummy ? (
-          <div className="bg-white p-4 rounded-xl border border-emerald-200 shadow-sm flex items-center gap-4 bg-emerald-50/20">
+          <div className="bg-white p-4 rounded-sm border border-emerald-200 shadow-sm flex items-center gap-4 bg-emerald-50/20">
             <div className="p-3 bg-emerald-100 text-emerald-700 rounded-lg shrink-0">
               <TrendingUp className="h-5 w-5" />
             </div>
@@ -536,7 +635,7 @@ export default function AnalyticsDashboard({
             </div>
           </div>
         ) : (
-          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div className="bg-white p-4 rounded-sm border border-slate-200 shadow-sm flex items-center gap-4">
             <div className="p-3 bg-slate-50 text-slate-400 rounded-lg shrink-0">
               <FileText className="h-5 w-5" />
             </div>
@@ -550,7 +649,7 @@ export default function AnalyticsDashboard({
 
         {/* KPI 5: Ricevute (if active company set) */}
         {activeCompany && !activeCompany.isDummy ? (
-          <div className="bg-white p-4 rounded-xl border border-purple-200 shadow-sm flex items-center gap-4 bg-purple-50/20">
+          <div className="bg-white p-4 rounded-sm border border-purple-200 shadow-sm flex items-center gap-4 bg-purple-50/20">
             <div className="p-3 bg-purple-100 text-purple-700 rounded-lg shrink-0">
               <Download className="h-5 w-5" />
             </div>
@@ -561,7 +660,7 @@ export default function AnalyticsDashboard({
             </div>
           </div>
         ) : (
-          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div className="bg-white p-4 rounded-sm border border-slate-200 shadow-sm flex items-center gap-4">
             <div className="p-3 bg-slate-50 text-slate-400 rounded-lg shrink-0">
               <Download className="h-5 w-5" />
             </div>
@@ -579,7 +678,7 @@ export default function AnalyticsDashboard({
         
         {/* CHART 1: TREND */}
         <div 
-          className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-4 min-h-[360px]"
+          className="bg-white p-5 rounded-sm border border-slate-200 shadow-sm flex flex-col gap-4 min-h-[360px]"
           id="chart-trend-card"
         >
           <div className="flex justify-between items-center border-b border-slate-100 pb-2.5">
@@ -636,7 +735,7 @@ export default function AnalyticsDashboard({
 
         {/* CHART 2: TOP CLIENTS */}
         <div 
-          className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-4 min-h-[360px]"
+          className="bg-white p-5 rounded-sm border border-slate-200 shadow-sm flex flex-col gap-4 min-h-[360px]"
           id="chart-clients-card"
         >
           <div className="flex justify-between items-center border-b border-slate-100 pb-2.5">
@@ -695,7 +794,7 @@ export default function AnalyticsDashboard({
 
         {/* CHART 3: DOCUMENT TYPES */}
         <div 
-          className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-4 min-h-[360px]"
+          className="bg-white p-5 rounded-sm border border-slate-200 shadow-sm flex flex-col gap-4 min-h-[360px]"
           id="chart-types-card"
         >
           <div className="flex justify-between items-center border-b border-slate-100 pb-2.5">
@@ -784,7 +883,7 @@ export default function AnalyticsDashboard({
 
         {/* CHART 4: PAYMENT METHODS */}
         <div 
-          className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-4 min-h-[360px]"
+          className="bg-white p-5 rounded-sm border border-slate-200 shadow-sm flex flex-col gap-4 min-h-[360px]"
           id="chart-payments-card"
         >
           <div className="flex justify-between items-center border-b border-slate-100 pb-2.5">
@@ -847,7 +946,7 @@ export default function AnalyticsDashboard({
       </div>
 
       {/* DETAILED DATA TABLE */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-4">
+      <div className="bg-white p-5 rounded-sm border border-slate-200 shadow-sm flex flex-col gap-4">
         <div className="flex justify-between items-center border-b border-slate-100 pb-2.5">
           <div className="flex items-center gap-2">
             <Building className="h-4.5 w-4.5 text-blue-500" />
@@ -886,7 +985,7 @@ export default function AnalyticsDashboard({
       </div>
 
       {/* CHART 6: TOP BENI E SERVIZI RICEVUTI */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-4">
+      <div className="bg-white p-5 rounded-sm border border-slate-200 shadow-sm flex flex-col gap-4">
         <div className="flex justify-between items-center border-b border-slate-100 pb-2.5">
           <div className="flex items-center gap-2">
             <FileText className="h-4.5 w-4.5 text-purple-500" />
@@ -940,7 +1039,11 @@ export default function AnalyticsDashboard({
           </table>
         </div>
       </div>
+        </div>
+      )}
 
     </div>
   );
 }
+
+
