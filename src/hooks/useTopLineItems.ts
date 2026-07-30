@@ -9,6 +9,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { loadAllLineItems, loadLineItemsBySupplierId, LineItemRecord } from "../utils/db";
+import { isFuzzyMatch } from "../utils/fuzzySearch";
 
 export interface LineItemAggregate {
   descrizione: string;
@@ -119,15 +120,15 @@ export function useTopLineItems({
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [rawLineItems]);
 
-  // Filter by search query (substring match on description)
+  // (Ricerca Fuzzy con Levenshtein):
   const filteredLineItems = useMemo((): LineItemRecord[] => {
     if (!debouncedQuery.trim()) {
       return rawLineItems;
     }
 
-    const queryLower = debouncedQuery.toLowerCase().trim();
+    // Utilizza isFuzzyMatch (tolleranza 1 errore per parole brevi/medie)
     return rawLineItems.filter((item) =>
-      item.descrizione.toLowerCase().includes(queryLower)
+        isFuzzyMatch(debouncedQuery, item.descrizione, 1)
     );
   }, [rawLineItems, debouncedQuery]);
 
