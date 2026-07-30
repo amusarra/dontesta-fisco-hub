@@ -1,6 +1,6 @@
 /**
  * useTopLineItems.ts
- * 
+ *
  * Custom React hook for managing Top Beni e Servizi Ricevuti with:
  * - Supplier filtering via dropdown
  * - Substring/fuzzy text search with debouncing
@@ -36,14 +36,16 @@ export interface SupplierOption {
 export interface UseTopLineItemsParams {
   searchQuery: string;
   selectedSupplierId?: string;
+  currentCompanyId?: string;
   limit?: number;
 }
 
-export function useTopLineItems({ 
-  searchQuery, 
-  selectedSupplierId, 
-  limit = 10 
-}: UseTopLineItemsParams) {
+export function useTopLineItems({
+                                  searchQuery,
+                                  selectedSupplierId,
+                                  currentCompanyId,
+                                  limit = 10
+                                }: UseTopLineItemsParams) {
   const [rawLineItems, setRawLineItems] = useState<LineItemRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
@@ -65,7 +67,7 @@ export function useTopLineItems({
       setIsLoading(true);
       try {
         let items: LineItemRecord[];
-        
+
         if (selectedSupplierId) {
           // Use index for efficient supplier filtering
           items = await loadLineItemsBySupplierId(selectedSupplierId);
@@ -96,11 +98,15 @@ export function useTopLineItems({
     };
   }, [selectedSupplierId]);
 
-  // Extract unique suppliers for dropdown
+  // Extract unique suppliers for dropdown (excluding current company)
   const suppliersList = useMemo((): SupplierOption[] => {
     const suppliersMap = new Map<string, { name: string; count: number }>();
 
     for (const item of rawLineItems) {
+      if (currentCompanyId && item.cedenteId === currentCompanyId) {
+        continue;
+      }
+
       if (suppliersMap.has(item.cedenteId)) {
         suppliersMap.get(item.cedenteId)!.count++;
       } else {
@@ -112,25 +118,30 @@ export function useTopLineItems({
     }
 
     return Array.from(suppliersMap.entries())
-      .map(([id, data]) => ({
-        id,
-        name: data.name,
-        lineCount: data.count,
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [rawLineItems]);
+        .map(([id, data]) => ({
+          id,
+          name: data.name,
+          lineCount: data.count,
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+  }, [rawLineItems, currentCompanyId]);
 
-  // (Ricerca Fuzzy con Levenshtein):
+  // Filter by search query (fuzzy match with Levenshtein)
   const filteredLineItems = useMemo((): LineItemRecord[] => {
-    if (!debouncedQuery.trim()) {
-      return rawLineItems;
+    let items = rawLineItems;
+
+    if (currentCompanyId) {
+      items = items.filter((item) => item.cedenteId !== currentCompanyId);
     }
 
-    // Utilizza isFuzzyMatch (tolleranza 1 errore per parole brevi/medie)
-    return rawLineItems.filter((item) =>
+    if (!debouncedQuery.trim()) {
+      return items;
+    }
+
+    return items.filter((item) =>
         isFuzzyMatch(debouncedQuery, item.descrizione, 1)
     );
-  }, [rawLineItems, debouncedQuery]);
+  }, [rawLineItems, debouncedQuery, currentCompanyId]);
 
   // Aggregate by description (group by)
   const aggregatedItems = useMemo((): LineItemAggregate[] => {
@@ -142,7 +153,6 @@ export function useTopLineItems({
     }>();
 
     for (const item of filteredLineItems) {
-      // Normalize description (trim + uppercase for grouping)
       const descNormalized = item.descrizione.trim().toUpperCase();
 
       if (groupsMap.has(descNormalized)) {
@@ -161,7 +171,6 @@ export function useTopLineItems({
       }
     }
 
-    // Convert to array and calculate derived metrics
     const aggregated = Array.from(groupsMap.entries()).map(([desc, data]): LineItemAggregate => ({
       descrizione: desc,
       quantitaTotale: data.quantita,
@@ -171,7 +180,6 @@ export function useTopLineItems({
       numeroLinee: data.lineeCount,
     }));
 
-    // Sort by total amount descending
     aggregated.sort((a, b) => b.importoTotale - a.importoTotale);
 
     return aggregated;
@@ -204,7 +212,7 @@ export function useTopLineItems({
 
   return {
     items: topItems,
-    allItems: aggregatedItems,  // For CSV export
+    allItems: aggregatedItems,
     summary,
     suppliersList,
     isLoading,

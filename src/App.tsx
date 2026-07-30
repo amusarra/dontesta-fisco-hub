@@ -122,7 +122,12 @@ export default function App() {
   const [activeCompany, setActiveCompany] = useState<Azienda | null>(null);
   const [isCompanyModalOpen, setIsCompanyModalOpen] = useState<boolean>(false);
   const [companyModalInitialView, setCompanyModalInitialView] = useState<"startup" | "selection" | "form">("selection");
-
+  // Recupera P.IVA o Codice Fiscale dell'azienda attiva (se non in modalità Guest)
+  const currentCompanyPiva = useMemo(() => {
+    if (!activeCompany || activeCompany.isDummy) return undefined;
+    // Restituisce la P.IVA se presente, altrimenti il Codice Fiscale
+    return activeCompany.partitaIva || activeCompany.codiceFiscale;
+  }, [activeCompany]);
   // Work directory configuration
   const [workDirectory, setWorkDirectory] = useState<string>(() => {
     return localStorage.getItem("dontesta_work_directory") || "/Users/amusarra/Downloads";
@@ -386,7 +391,7 @@ export default function App() {
           );
           
           // Extract and save line items
-          extractAndSaveLineItems(updated).catch((err) => {
+          extractAndSaveLineItems(updated, currentCompanyPiva).catch((err) => {
             console.error("[App] Error extracting line items (folder import):", err);
           });
           
@@ -503,7 +508,7 @@ export default function App() {
           }
 
           // Extract and save line items to IndexedDB for Top Beni e Servizi feature
-          await extractAndSaveLineItems(deduplicated);
+          await extractAndSaveLineItems(deduplicated, currentCompanyPiva);
 
           setSelectedInvoice(deduplicated[0]);
           addToast(`Caricate ${deduplicated.length} fatture salvate.`, "success");
@@ -531,7 +536,14 @@ export default function App() {
     initDB();
   }, []);
 
-
+  // 2. Rigenera le linee di dettaglio quando cambia l'azienda attiva o l'elenco fatture
+  useEffect(() => {
+    if (invoices.length > 0) {
+      extractAndSaveLineItems(invoices, currentCompanyPiva).catch((err) => {
+        console.error("[App] Errore nell'aggiornamento automatico linee dettaglio:", err);
+      });
+    }
+  }, [activeCompany, invoices, currentCompanyPiva]);
 
   // Calculate dynamic years available in loaded invoices
   const yearsList = useMemo(() => {
@@ -616,7 +628,7 @@ export default function App() {
         );
         
         // Extract and save line items
-        extractAndSaveLineItems(updated).catch((err) => {
+        extractAndSaveLineItems(updated, currentCompanyPiva).catch((err) => {
           console.error("[App] Error extracting line items (file upload):", err);
         });
         
@@ -746,7 +758,7 @@ export default function App() {
                 console.error("[DB] Errore nella pulizia delle linee dettaglio:", err)
             );
           } else {
-            extractAndSaveLineItems(updated).catch((err) =>
+            extractAndSaveLineItems(updated, currentCompanyPiva).catch((err) =>
                 console.error("[DB] Errore nell'aggiornamento delle linee dettaglio:", err)
             );
           }
