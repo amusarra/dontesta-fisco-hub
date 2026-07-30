@@ -1099,7 +1099,7 @@ export default function App() {
               </span>
             </div>
             <p className="text-[10px] text-slate-400 font-medium truncate">
-              Fatturazione Elettronica Open-Source • Supportato dal Blog <a href="https://www.dontesta.it" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">dontesta.it</a>
+              Fatturazione Elettronica Open-Source
             </p>
           </div>
 
@@ -1120,7 +1120,7 @@ export default function App() {
             id="sidebar-toggle-btn"
           >
             <Building className="h-4 w-4" />
-            <span className="hidden sm:inline">Anagrafiche</span>
+            <span className="hidden sm:inline"></span>
             {isSidebarExpanded ? (
               <ChevronLeft className="h-3 w-3 opacity-75" />
             ) : (
@@ -1145,7 +1145,7 @@ export default function App() {
             id="invoice-list-toggle-btn"
           >
             <ListFilter className="h-4 w-4" />
-            <span className="hidden sm:inline">Lista Fatture</span>
+            <span className="hidden sm:inline"></span>
             {isInvoiceListExpanded ? (
               <ChevronLeft className="h-3 w-3 opacity-75" />
             ) : (
