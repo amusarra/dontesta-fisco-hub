@@ -32,6 +32,7 @@ import {
 import { FatturaElettronica, DatiCorrispettivi, TIPO_DOCUMENTO_MAP, MODALITA_PAGAMENTO_MAP, Azienda } from "../types";
 import { getInvoiceDirection } from "../utils/companyDb";
 import CorrispettiviAnalytics from "./CorrispettiviAnalytics";
+import { TopBeniServiziSection } from "./TopBeniServiziSection";
 import html2canvas from "html2canvas-pro";
 
 interface AnalyticsDashboardProps {
@@ -394,26 +395,10 @@ export default function AnalyticsDashboard({
   }, [filteredData]);
 
   // --------------------------------------------------------
-  // CHART 6: Top Beni e Servizi Ricevuti - SOLO FATTURE RICEVUTE
   // --------------------------------------------------------
-  const topBeniServiziRicevutiData = useMemo(() => {
-    const items: Record<string, { descrizione: string; quantita: number; totale: number }> = {};
-
-    ricevuteInvoices.forEach(inv => {
-      inv.linee.forEach(linea => {
-        const desc = (linea.descrizione || "Descrizione non disponibile").trim();
-        if (!items[desc]) {
-          items[desc] = { descrizione: desc, quantita: 0, totale: 0 };
-        }
-        items[desc].quantita += linea.quantita || 0;
-        items[desc].totale += linea.prezzoTotale || 0;
-      });
-    });
-
-    return Object.values(items)
-      .sort((a, b) => b.totale - a.totale)
-      .slice(0, 10); // Top 10 beni/servizi
-  }, [ricevuteInvoices]);
+  // NOTE: Top Beni e Servizi is now handled by TopBeniServiziSection component
+  // using IndexedDB line items store for efficient filtering and aggregation
+  // --------------------------------------------------------
 
   return (
     <div className="flex-1 overflow-y-auto bg-slate-50 p-6 flex flex-col gap-6 animate-fade-in" id="analytics-dashboard-page">
@@ -990,61 +975,8 @@ export default function AnalyticsDashboard({
         </div>
       </div>
 
-      {/* CHART 6: TOP BENI E SERVIZI RICEVUTI */}
-      <div className="bg-white p-5 rounded-sm border border-slate-200 shadow-sm flex flex-col gap-4">
-        <div className="flex justify-between items-center border-b border-slate-100 pb-2.5">
-          <div className="flex items-center gap-2">
-            <FileText className="h-4.5 w-4.5 text-purple-500" />
-            <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-tight">Top 10 Beni e Servizi Ricevuti</h3>
-            <span className="text-[10px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full font-bold border border-purple-200">Solo Fatture Ricevute</span>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => downloadCSV(topBeniServiziRicevutiData, "top_beni_servizi_ricevuti", ["descrizione", "quantita", "totale"], {
-                descrizione: "Descrizione Bene/Servizio",
-                quantita: "Quantità",
-                totale: "Importo Totale"
-              })}
-              className="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 text-white text-[10px] font-bold rounded-md cursor-pointer transition-all active:scale-95 flex items-center gap-1"
-              title="Esporta dati in CSV"
-            >
-              <FileSpreadsheet className="h-3 w-3" />
-              CSV
-            </button>
-          </div>
-        </div>
-        
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase text-[9px] tracking-wider bg-slate-50">
-                <th className="py-2.5 px-3 w-2/5">Descrizione Bene/Servizio</th>
-                <th className="py-2.5 px-3 text-right">Quantità</th>
-                <th className="py-2.5 px-3 text-right">Importo Totale</th>
-              </tr>
-            </thead>
-            <tbody>
-              {topBeniServiziRicevutiData.length === 0 ? (
-                <tr>
-                  <td colSpan={3} className="py-4 text-center text-slate-400 font-medium">Nessun bene o servizio trovato nelle fatture ricevute.</td>
-                </tr>
-              ) : (
-                topBeniServiziRicevutiData.map((item, idx) => (
-                  <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50/70 transition-colors font-medium text-slate-700">
-                    <td className="py-3 px-3 text-slate-950 font-bold max-w-md truncate" title={item.descrizione}>
-                      {item.descrizione}
-                    </td>
-                    <td className="py-3 px-3 text-right font-mono text-slate-600">
-                      {item.quantita.toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </td>
-                    <td className="py-3 px-3 text-right font-mono text-purple-600 font-bold">{formatEuro(item.totale)}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* CHART 6: TOP BENI E SERVIZI RICEVUTI - NEW IMPLEMENTATION */}
+      <TopBeniServiziSection onShowNotification={onShowNotification} />
         </div>
       )}
 

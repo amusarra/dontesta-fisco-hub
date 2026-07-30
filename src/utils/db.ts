@@ -13,10 +13,11 @@
 import { openDB, IDBPDatabase } from "idb";
 
 const DB_NAME = "fattura_pa_reader_db";
-const DB_VERSION = 3;
+const DB_VERSION = 4;  // Increased for line items store
 const STORE_NAME = "invoices";
 const COMPANY_STORE_NAME = "companies";
 const CORRISPETTIVI_STORE_NAME = "corrispettivi";
+const LINE_ITEMS_STORE_NAME = "dettaglioLinee";
 
 // Legacy localStorage key used before this migration
 const LS_LEGACY_KEY = "dontesta_uploaded_invoices";
@@ -34,6 +35,29 @@ export interface CorrispettivoRecord {
   rawXml: string;
 }
 
+export interface LineItemRecord {
+  id: string;           // composite: `${fatturaId}_${numeroLinea}`
+  fatturaId: string;     // invoice fileName
+  numeroLinea: number;
+  
+  // Supplier info for filtering
+  cedenteId: string;     // P.IVA or CF del fornitore
+  cedenteDenominazione: string;
+  
+  // Line details
+  descrizione: string;
+  quantita: number;
+  unitaMisura?: string;
+  prezzoUnitario: number;
+  aliquotaIva: number;
+  prezzoTotale: number;
+  codiceArticolo?: string;
+  
+  // For tracking
+  dataFattura: string;   // YYYY-MM-DD
+  numeroFattura: string;
+}
+
 type FatturaDB = {
   [STORE_NAME]: {
     key: string;
@@ -43,6 +67,11 @@ type FatturaDB = {
     key: string;
     value: CorrispettivoRecord;
   };
+  [LINE_ITEMS_STORE_NAME]: {
+    key: string;
+    value: LineItemRecord;
+    indexes: { cedenteId: string; descrizione: string };
+  };
 };
 
 let _db: IDBPDatabase<any> | null = null;
@@ -51,7 +80,7 @@ let _db: IDBPDatabase<any> | null = null;
 async function getDB(): Promise<IDBPDatabase<any>> {
   if (_db) return _db;
   _db = await openDB(DB_NAME, DB_VERSION, {
-    upgrade(db) {
+    upgrade(db, oldVersion) {
       if (!db.objectStoreNames.contains(STORE_NAME)) {
         db.createObjectStore(STORE_NAME, { keyPath: "id" });
       }
@@ -60,6 +89,13 @@ async function getDB(): Promise<IDBPDatabase<any>> {
       }
       if (!db.objectStoreNames.contains(CORRISPETTIVI_STORE_NAME)) {
         db.createObjectStore(CORRISPETTIVI_STORE_NAME, { keyPath: "id" });
+      }
+      // New in v4: Line items store with indexes for efficient filtering
+      if (!db.objectStoreNames.contains(LINE_ITEMS_STORE_NAME)) {
+        const lineStore = db.createObjectStore(LINE_ITEMS_STORE_NAME, { keyPath: "id" });
+        lineStore.createIndex("cedenteId", "cedenteId", { unique: false });
+        lineStore.createIndex("descrizione", "descrizione", { unique: false });
+        lineStore.createIndex("fatturaId", "fatturaId", { unique: false });
       }
     },
   });
@@ -165,5 +201,50 @@ export async function migrateFromLocalStorage(): Promise<void> {
     // Always remove the legacy key to avoid re-migration attempts
     localStorage.removeItem(LS_LEGACY_KEY);
   }
+}
+
+// ============================================================================
+// LINE ITEMS OPERATIONS (New in v4)
+// ============================================================================
+
+/**
+ * Saves line items extracted from invoices to IndexedDB for efficient filtering and search.
+ * This should be called after invoices are imported/parsed.
+ */
+export async function saveLineItemsToDB(lineItems: LineItemRecord[]): Promise<void> {
+  const db = await getDB();
+  const tx = db.transaction(LINE_ITEMS_STORE_NAME, "readwrite");
+  await tx.store.clear();
+  for (const item of lineItems) {
+    await tx.store.put(item);
+  }
+  await tx.done;
+}
+
+/**
+ * Loads all line items from IndexedDB.
+ */
+export async function loadAllLineItems(): Promise<LineItemRecord[]> {
+  const db = await getDB();
+  return db.getAll(LINE_ITEMS_STORE_NAME);
+}
+
+/**
+ * Loads line items filtered by supplier (cedenteId).
+ * Uses index for efficient query.
+ */
+export async function loadLineItemsBySupplierId(cedenteId: string): Promise<LineItemRecord[]> {
+  const db = await getDB();
+  const tx = db.transaction(LINE_ITEMS_STORE_NAME, "readonly");
+  const index = tx.store.index("cedenteId");
+  return index.getAll(cedenteId);
+}
+
+/**
+ * Clears all line items from the store.
+ */
+export async function clearLineItemsDB(): Promise<void> {
+  const db = await getDB();
+  await db.clear(LINE_ITEMS_STORE_NAME);
 }
 

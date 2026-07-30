@@ -41,10 +41,11 @@ import CompanyModal from "./components/CompanyModal";
 import CorrispettiviList from "./components/CorrispettiviList";
 import { parseFatturaXML, validateFatturaXML, extractXmlFromP7m, decodeXmlBytes } from "./utils/parser";
 import { validateCorrispettivoXML, parseCorrispettivoXML } from "./utils/corrispettiviParser";
-import { loadInvoicesFromDB, saveInvoicesToDB, clearInvoicesDB, migrateFromLocalStorage, loadCorrispettiviFromDB, saveCorrispettiviToDB, clearCorrispettiviDB } from "./utils/db";
+import { loadInvoicesFromDB, saveInvoicesToDB, clearInvoicesDB, migrateFromLocalStorage, loadCorrispettiviFromDB, saveCorrispettiviToDB, clearCorrispettiviDB, clearLineItemsDB } from "./utils/db";
 import { loadCompaniesFromDB, saveCompanyToDB, deleteCompanyFromDB, getActiveCompanyIdFromLS, setActiveCompanyIdInLS, DUMMY_GUEST_COMPANY } from "./utils/companyDb";
 import { FatturaElettronica, DatiCorrispettivi, Azienda } from "./types";
 import appMetadata from "../metadata.json";
+import {extractAndSaveLineItems} from "@/src/utils/lineItemsExtractor.ts";
 
 
 interface Toast {
@@ -379,9 +380,16 @@ export default function App() {
         setInvoices((prev) => {
           const filteredPrev = prev.filter((p) => !newInvoices.some((n) => n.id === p.id));
           const updated = deduplicateInvoices([...filteredPrev, ...newInvoices]);
+          
           saveInvoicesToDB(updated.map((u) => ({ fileName: u.fileName, rawXml: u.rawXml, rawP7mBase64: u.rawP7mBase64 }))).catch(
             (err) => console.error("[DB] Errore nel salvataggio fatture (cartella):", err)
           );
+          
+          // Extract and save line items
+          extractAndSaveLineItems(updated).catch((err) => {
+            console.error("[App] Error extracting line items (folder import):", err);
+          });
+          
           return updated;
         });
         setSelectedInvoice(newInvoices[0]);
@@ -494,6 +502,9 @@ export default function App() {
             );
           }
 
+          // Extract and save line items to IndexedDB for Top Beni e Servizi feature
+          await extractAndSaveLineItems(deduplicated);
+
           setSelectedInvoice(deduplicated[0]);
           addToast(`Caricate ${deduplicated.length} fatture salvate.`, "success");
         } else {
@@ -599,9 +610,16 @@ export default function App() {
       setInvoices((prev) => {
         const filteredPrev = prev.filter((p) => !newInvoices.some((n) => n.id === p.id));
         const updated = deduplicateInvoices([...filteredPrev, ...newInvoices]);
+        
         saveInvoicesToDB(updated.map((u) => ({ fileName: u.fileName, rawXml: u.rawXml, rawP7mBase64: u.rawP7mBase64 }))).catch(
           (err) => console.error("[DB] Errore nel salvataggio fatture (upload):", err)
         );
+        
+        // Extract and save line items
+        extractAndSaveLineItems(updated).catch((err) => {
+          console.error("[App] Error extracting line items (file upload):", err);
+        });
+        
         return updated;
       });
       setSelectedInvoice(newInvoices[0]);
@@ -675,7 +693,9 @@ export default function App() {
         clearInvoicesDB().catch(
           (err) => console.error("[DB] Errore nell'eliminazione del database:", err)
         );
-        
+        clearLineItemsDB().catch(
+            (err) => console.error("[DB] Errore nell'eliminazione delle linee dettaglio:", err)
+        );
         // Reset active filters
         setSelectedYears([]);
         setSelectedMonths([]);
@@ -719,7 +739,18 @@ export default function App() {
           saveInvoicesToDB(updated.map((u) => ({ fileName: u.fileName, rawXml: u.rawXml, rawP7mBase64: u.rawP7mBase64 }))).catch(
             (err) => console.error("[DB] Errore nel salvataggio dopo eliminazione:", err)
           );
-          
+
+          // Sincronizzazione dettaglio linee: svuota se vuoto o rigenera sulle rimanenti
+          if (updated.length === 0) {
+            clearLineItemsDB().catch((err) =>
+                console.error("[DB] Errore nella pulizia delle linee dettaglio:", err)
+            );
+          } else {
+            extractAndSaveLineItems(updated).catch((err) =>
+                console.error("[DB] Errore nell'aggiornamento delle linee dettaglio:", err)
+            );
+          }
+
           // Update selectedInvoice if it is among the deleted ones
           setSelectedInvoice((prevSelected) => {
             if (prevSelected && idsToDelete.includes(prevSelected.id)) {
