@@ -556,7 +556,6 @@ export default function InvoiceViewer({ invoice, onDownloadXml, onShowNotificati
             id="print-invoice-btn"
           >
             <Printer className="h-4 w-4 text-slate-500" />
-            <span className="hidden sm:inline">Stampa</span>
           </button>
 
           {/* Export PDF Button */}
