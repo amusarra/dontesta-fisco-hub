@@ -9,7 +9,9 @@ export interface DatabaseInfo {
   storageType: string;  // 'Browser Storage' or 'Application Storage'
   browserInfo: string;  // Browser/platform info
   estimatedSize: string;
-  recordCount: number;
+  invoicesCount?: number;
+  companiesCount?: number;
+  corrispettiviCount?: number;
   error?: string;
 }
 
@@ -29,7 +31,9 @@ export async function getDatabaseInfo(): Promise<DatabaseInfo> {
         storageType: 'N/A',
         browserInfo: 'IndexedDB non supportato',
         estimatedSize: 'N/A',
-        recordCount: 0,
+        invoicesCount: 0,
+        companiesCount: 0,
+        corrispettiviCount: 0,
         error: 'IndexedDB non supportato dal browser'
       };
     }
@@ -42,19 +46,30 @@ export async function getDatabaseInfo(): Promise<DatabaseInfo> {
       request.onerror = () => reject(request.error);
     });
 
-    // Get record count
-    let recordCount = 0;
-    try {
-      const transaction = db.transaction('invoices', 'readonly');
-      const store = transaction.objectStore('invoices');
-      const countRequest = store.count();
-      recordCount = await new Promise<number>((resolve, reject) => {
-        countRequest.onsuccess = () => resolve(countRequest.result);
-        countRequest.onerror = () => resolve(0);
+// Helper per contare i record in uno store specifico
+    const countStore = (storeName: string): Promise<number> => {
+      return new Promise((resolve) => {
+        try {
+          if (!db.objectStoreNames.contains(storeName)) {
+            return resolve(0);
+          }
+          const transaction = db.transaction(storeName, 'readonly');
+          const store = transaction.objectStore(storeName);
+          const countReq = store.count();
+          countReq.onsuccess = () => resolve(countReq.result);
+          countReq.onerror = () => resolve(0);
+        } catch {
+          resolve(0);
+        }
       });
-    } catch {
-      recordCount = 0;
-    }
+    };
+
+    // Lettura simultanea dei conteggi
+    const [invoicesCount, companiesCount, corrispettiviCount] = await Promise.all([
+      countStore('invoices'),
+      countStore('companies'),
+      countStore('corrispettivi')
+    ]);
 
     // Get storage estimate (browser API)
     let estimatedSize = 'N/A';
@@ -101,7 +116,9 @@ export async function getDatabaseInfo(): Promise<DatabaseInfo> {
       storageType,
       browserInfo,
       estimatedSize,
-      recordCount
+      invoicesCount,
+      companiesCount,
+      corrispettiviCount
     };
 
   } catch (error) {
@@ -112,7 +129,9 @@ export async function getDatabaseInfo(): Promise<DatabaseInfo> {
       storageType: 'N/A',
       browserInfo: 'N/A',
       estimatedSize: 'N/A',
-      recordCount: 0,
+      invoicesCount: 0,
+      companiesCount: 0,
+      corrispettiviCount: 0,
       error: error instanceof Error ? error.message : 'Errore sconosciuto'
     };
   }

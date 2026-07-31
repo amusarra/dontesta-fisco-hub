@@ -105,9 +105,20 @@ export default function DatabaseStatus() {
                   <span className="font-bold text-slate-900">{dbInfo.version}</span>
                 </div>
 
+                {/* Conteggi degli store */}
                 <div className="flex justify-between items-start">
                   <span className="font-semibold text-slate-600">Fatture:</span>
-                  <span className="font-bold text-blue-600">{dbInfo.recordCount}</span>
+                  <span className="font-bold text-blue-600">{dbInfo.invoicesCount}</span>
+                </div>
+
+                <div className="flex justify-between items-start">
+                  <span className="font-semibold text-slate-600">Aziende:</span>
+                  <span className="font-bold text-blue-600">{dbInfo.companiesCount}</span>
+                </div>
+
+                <div className="flex justify-between items-start">
+                  <span className="font-semibold text-slate-600">Corrispettivi:</span>
+                  <span className="font-bold text-blue-600">{dbInfo.corrispettiviCount}</span>
                 </div>
 
                 <div className="flex justify-between items-start">
