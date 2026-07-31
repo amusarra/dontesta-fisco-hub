@@ -1134,7 +1134,7 @@ export default function App() {
                 id="brand-home-link"
               >
                 <h1 className="text-base font-bold tracking-tight text-white flex items-center">
-                  DonTesta <span className="text-blue-400 font-black ml-1">FatturaPA</span>
+                  DonTesta <span className="text-blue-400 font-black ml-1">FiscoHub</span>
                 </h1>
               </a>
               <span className="bg-blue-600/20 text-[9px] text-blue-400 px-1.5 py-0.5 rounded-sm border border-blue-500/30 font-bold uppercase tracking-wider">
@@ -1570,7 +1570,7 @@ export default function App() {
 
               {/* Description */}
               <p className="text-slate-600 leading-relaxed text-xs">
-                Visualizzatore open-source e cross-platform per fatture elettroniche XML (FatturaPA), supportato dal Blog di Antonio Musarra (<a href="https://www.dontesta.it" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline font-semibold">dontesta.it</a>).
+                Visualizzatore open-source e cross-platform per fatture elettroniche e corrispettivi XML, supportato dal Blog di Antonio Musarra (<a href="https://www.dontesta.it" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline font-semibold">dontesta.it</a>).
               </p>
 
               {/* Links List */}

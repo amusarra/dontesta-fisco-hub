@@ -2,7 +2,7 @@
 
 > **Visualizzatore open-source e cross-platform per fatture elettroniche XML (FatturaPA), supportato dal Blog di Antonio Musarra ([dontesta.it](https://www.dontesta.it)).**
 
-DonTesta FatturaPA consente di importare, organizzare e visualizzare le fatture elettroniche in modo semplice, veloce ed 
+DonTesta FiscoHub consente di importare, organizzare e visualizzare le fatture elettroniche e corrispettivi in modo semplice, veloce ed 
 efficiente, direttamente nel tuo browser o come applicazione desktop nativa. **Non è un software di contabilità**.
 
 Vai sulla [pagina delle release](https://github.com/amusarra/fattura-pa-reader/releases) per scaricare l'ultima versione
@@ -148,7 +148,7 @@ In caso di anomalie o comportamenti inattesi durante l'esecuzione o il build:
 Se l'applicazione mostra uno schermo nero all'avvio su hardware datato o schede grafiche legacy, disabilita il compositing di WebKitGTK avviando l'app con la seguente variabile d'ambiente:
 
     ```bash
-    WEBKIT_DISABLE_COMPOSITING_MODE=1 dontesta-fatturapa
+    WEBKIT_DISABLE_COMPOSITING_MODE=1 dontesta-fiscohub
     ```
 
 - Linux - Symbol lookup error (undefined symbol):
