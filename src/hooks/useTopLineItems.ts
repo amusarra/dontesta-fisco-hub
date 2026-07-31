@@ -18,6 +18,11 @@ export interface LineItemAggregate {
   prezzoUnitarioMedio: number;
   numeroFatture: number;
   numeroLinee: number;
+  documenti: Array<{
+    fatturaId: string;
+    fornitore: string;
+    numeroFattura: string;
+  }>;
 }
 
 export interface FilterSummary {
@@ -173,7 +178,7 @@ export function useTopLineItems({
     const groupsMap = new Map<string, {
       quantita: number;
       totale: number;
-      fattureSet: Set<string>;
+      documenti: Map<string, { fatturaId: string; fornitore: string; numeroFattura: string }>;
       lineeCount: number;
     }>();
 
@@ -184,13 +189,21 @@ export function useTopLineItems({
         const group = groupsMap.get(descNormalized)!;
         group.quantita += item.quantita;
         group.totale += item.prezzoTotale;
-        group.fattureSet.add(item.fatturaId);
+        group.documenti.set(item.fatturaId, {
+          fatturaId: item.fatturaId,
+          fornitore: item.cedenteDenominazione,
+          numeroFattura: item.numeroFattura,
+        });
         group.lineeCount++;
       } else {
         groupsMap.set(descNormalized, {
           quantita: item.quantita,
           totale: item.prezzoTotale,
-          fattureSet: new Set([item.fatturaId]),
+          documenti: new Map([[item.fatturaId, {
+            fatturaId: item.fatturaId,
+            fornitore: item.cedenteDenominazione,
+            numeroFattura: item.numeroFattura,
+          }]]),
           lineeCount: 1,
         });
       }
@@ -201,8 +214,11 @@ export function useTopLineItems({
       quantitaTotale: data.quantita,
       importoTotale: data.totale,
       prezzoUnitarioMedio: data.quantita > 0 ? data.totale / data.quantita : 0,
-      numeroFatture: data.fattureSet.size,
+      numeroFatture: data.documenti.size,
       numeroLinee: data.lineeCount,
+      documenti: Array.from(data.documenti.values()).sort((a, b) =>
+        a.fornitore.localeCompare(b.fornitore) || a.numeroFattura.localeCompare(b.numeroFattura)
+      ),
     }));
 
     aggregated.sort((a, b) => b.importoTotale - a.importoTotale);

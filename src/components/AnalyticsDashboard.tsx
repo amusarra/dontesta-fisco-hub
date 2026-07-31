@@ -41,6 +41,7 @@ interface AnalyticsDashboardProps {
   selectedYears: string[];
   selectedMonths: string[];
   onClose: () => void;
+  onSelectInvoice: (invoiceId: string) => void;
   onShowNotification?: (message: string, type: "success" | "error" | "info") => void;
   activeCompany?: Azienda | null;
 }
@@ -59,6 +60,7 @@ export default function AnalyticsDashboard({
   selectedYears,
   selectedMonths,
   onClose,
+  onSelectInvoice,
   onShowNotification,
   activeCompany
 }: AnalyticsDashboardProps) {
@@ -978,6 +980,7 @@ export default function AnalyticsDashboard({
       {/* CHART 6: TOP BENI E SERVIZI RICEVUTI - NEW IMPLEMENTATION */}
       <TopBeniServiziSection
         onShowNotification={onShowNotification}
+        onSelectInvoice={onSelectInvoice}
         selectedYears={selectedYears}
         selectedMonths={selectedMonths}
       />
@@ -987,4 +990,3 @@ export default function AnalyticsDashboard({
     </div>
   );
 }
-

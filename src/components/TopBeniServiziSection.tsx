@@ -9,24 +9,55 @@
  * - CSV export of filtered results
  */
 
-import React, { useState } from "react";
-import { Search, Building, FileSpreadsheet, FileText, TrendingDown } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { Search, Building, FileSpreadsheet, FileText, TrendingDown, X } from "lucide-react";
 import { useTopLineItems } from "../hooks/useTopLineItems";
 
 interface TopBeniServiziSectionProps {
   onShowNotification?: (message: string, type: "success" | "error" | "info") => void;
+  onSelectInvoice?: (invoiceId: string) => void;
   selectedYears: string[];
   selectedMonths: string[];
 }
 
 export function TopBeniServiziSection({
   onShowNotification,
+  onSelectInvoice,
   selectedYears,
   selectedMonths,
 }: TopBeniServiziSectionProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSupplierId, setSelectedSupplierId] = useState<string>("");
   const [displayLimit, setDisplayLimit] = useState(10);
+  const [openDocumentsFor, setOpenDocumentsFor] = useState<string | null>(null);
+  const documentsPopoverRef = useRef<HTMLTableCellElement>(null);
+
+  useEffect(() => {
+    if (!openDocumentsFor) return;
+
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      if (
+        documentsPopoverRef.current &&
+        !documentsPopoverRef.current.contains(event.target as Node)
+      ) {
+        setOpenDocumentsFor(null);
+      }
+    };
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpenDocumentsFor(null);
+      }
+    };
+
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [openDocumentsFor]);
 
   const { items, allItems, summary, suppliersList, isLoading, hasActiveFilter } = 
     useTopLineItems({ 
@@ -282,10 +313,50 @@ export function TopBeniServiziSection({
                     <td className="py-3 px-3 text-right font-mono text-purple-600 font-bold">
                       {formatEuro(item.importoTotale)}
                     </td>
-                    <td className="py-3 px-3 text-center">
-                      <span className="inline-block bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                    <td
+                      ref={openDocumentsFor === item.descrizione ? documentsPopoverRef : undefined}
+                      className="relative py-3 px-3 text-center"
+                    >
+                      <button
+                        type="button"
+                        className="inline-block cursor-pointer bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full text-[10px] font-bold hover:bg-purple-100 hover:text-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                        onClick={() => setOpenDocumentsFor((current) => current === item.descrizione ? null : item.descrizione)}
+                        aria-expanded={openDocumentsFor === item.descrizione}
+                        aria-label={`Mostra ${item.numeroFatture} documenti per ${item.descrizione}`}
+                        title="Mostra i documenti associati"
+                      >
                         {item.numeroFatture}
-                      </span>
+                      </button>
+                      {openDocumentsFor === item.descrizione && (
+                        <div className="absolute right-3 top-10 z-20 w-80 overflow-hidden rounded-lg border border-purple-200 bg-white text-left shadow-xl">
+                          <div className="flex items-center justify-between border-b border-purple-100 bg-purple-50 px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-purple-700">
+                            <span>Documenti associati</span>
+                            <button
+                              type="button"
+                              onClick={() => setOpenDocumentsFor(null)}
+                              className="rounded p-0.5 text-purple-600 hover:bg-purple-100 hover:text-purple-900 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                              aria-label="Chiudi elenco documenti"
+                              title="Chiudi"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                          <div className="max-h-56 overflow-y-auto p-1">
+                            {item.documenti.map(({ fatturaId, fornitore, numeroFattura }) => (
+                              <button
+                                key={fatturaId}
+                                type="button"
+                                onClick={() => onSelectInvoice?.(fatturaId)}
+                                className="w-full rounded-md px-3 py-2 text-left text-xs transition-colors hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                                title="Apri la fattura nella vista Fatture"
+                              >
+                                <span className="block truncate font-bold text-slate-800">{fornitore}</span>
+                                <span className="block text-[10px] text-slate-500">Fattura n. {numeroFattura}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))

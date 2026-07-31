@@ -1384,6 +1384,15 @@ export default function App() {
           selectedYears={selectedYears}
           selectedMonths={selectedMonths}
           onClose={() => setActiveView("list")}
+          onSelectInvoice={(invoiceId) => {
+            const invoice = invoices.find((item) => item.id === invoiceId);
+            if (!invoice) {
+              addToast("Impossibile trovare la fattura selezionata.", "error");
+              return;
+            }
+            setSelectedInvoice(invoice);
+            setActiveView("list");
+          }}
           onShowNotification={addToast}
           activeCompany={activeCompany}
         />
