@@ -15,9 +15,15 @@ import { useTopLineItems } from "../hooks/useTopLineItems";
 
 interface TopBeniServiziSectionProps {
   onShowNotification?: (message: string, type: "success" | "error" | "info") => void;
+  selectedYears: string[];
+  selectedMonths: string[];
 }
 
-export function TopBeniServiziSection({ onShowNotification }: TopBeniServiziSectionProps) {
+export function TopBeniServiziSection({
+  onShowNotification,
+  selectedYears,
+  selectedMonths,
+}: TopBeniServiziSectionProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSupplierId, setSelectedSupplierId] = useState<string>("");
   const [displayLimit, setDisplayLimit] = useState(10);
@@ -26,6 +32,8 @@ export function TopBeniServiziSection({ onShowNotification }: TopBeniServiziSect
     useTopLineItems({ 
       searchQuery, 
       selectedSupplierId: selectedSupplierId || undefined, 
+      selectedYears,
+      selectedMonths,
       limit: displayLimit 
     });
 

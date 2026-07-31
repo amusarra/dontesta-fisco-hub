@@ -37,13 +37,30 @@ export interface UseTopLineItemsParams {
   searchQuery: string;
   selectedSupplierId?: string;
   currentCompanyId?: string;
+  selectedYears?: string[];
+  selectedMonths?: string[];
   limit?: number;
+}
+
+function matchesPeriod(
+  item: LineItemRecord,
+  selectedYears: string[],
+  selectedMonths: string[]
+): boolean {
+  const [year, month] = item.dataFattura.split("-");
+
+  return (
+    (selectedYears.length === 0 || selectedYears.includes(year)) &&
+    (selectedMonths.length === 0 || selectedMonths.includes(month))
+  );
 }
 
 export function useTopLineItems({
                                   searchQuery,
                                   selectedSupplierId,
                                   currentCompanyId,
+                                  selectedYears = [],
+                                  selectedMonths = [],
                                   limit = 10
                                 }: UseTopLineItemsParams) {
   const [rawLineItems, setRawLineItems] = useState<LineItemRecord[]>([]);
@@ -107,6 +124,10 @@ export function useTopLineItems({
         continue;
       }
 
+      if (!matchesPeriod(item, selectedYears, selectedMonths)) {
+        continue;
+      }
+
       if (suppliersMap.has(item.cedenteId)) {
         suppliersMap.get(item.cedenteId)!.count++;
       } else {
@@ -124,15 +145,19 @@ export function useTopLineItems({
           lineCount: data.count,
         }))
         .sort((a, b) => a.name.localeCompare(b.name));
-  }, [rawLineItems, currentCompanyId]);
+  }, [rawLineItems, currentCompanyId, selectedYears, selectedMonths]);
 
-  // Filter by search query (fuzzy match with Levenshtein)
+  // Apply the dashboard's temporal filters before the local supplier/text filters.
+  // Line items retain their invoice date, so the same filters used by the
+  // invoice charts can be applied without reloading or reparsing invoices.
   const filteredLineItems = useMemo((): LineItemRecord[] => {
     let items = rawLineItems;
 
     if (currentCompanyId) {
       items = items.filter((item) => item.cedenteId !== currentCompanyId);
     }
+
+    items = items.filter((item) => matchesPeriod(item, selectedYears, selectedMonths));
 
     if (!debouncedQuery.trim()) {
       return items;
@@ -141,7 +166,7 @@ export function useTopLineItems({
     return items.filter((item) =>
         isFuzzyMatch(debouncedQuery, item.descrizione, 1)
     );
-  }, [rawLineItems, debouncedQuery, currentCompanyId]);
+  }, [rawLineItems, debouncedQuery, currentCompanyId, selectedYears, selectedMonths]);
 
   // Aggregate by description (group by)
   const aggregatedItems = useMemo((): LineItemAggregate[] => {
@@ -216,6 +241,6 @@ export function useTopLineItems({
     summary,
     suppliersList,
     isLoading,
-    hasActiveFilter: !!selectedSupplierId || !!debouncedQuery.trim(),
+    hasActiveFilter: !!selectedSupplierId || !!debouncedQuery.trim() || selectedYears.length > 0 || selectedMonths.length > 0,
   };
 }

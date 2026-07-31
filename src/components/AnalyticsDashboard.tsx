@@ -976,12 +976,15 @@ export default function AnalyticsDashboard({
       </div>
 
       {/* CHART 6: TOP BENI E SERVIZI RICEVUTI - NEW IMPLEMENTATION */}
-      <TopBeniServiziSection onShowNotification={onShowNotification} />
+      <TopBeniServiziSection
+        onShowNotification={onShowNotification}
+        selectedYears={selectedYears}
+        selectedMonths={selectedMonths}
+      />
         </div>
       )}
 
     </div>
   );
 }
-
 
