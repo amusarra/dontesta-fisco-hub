@@ -1124,7 +1124,7 @@ function formatCertificateVersion(cert: forge.pki.Certificate): string {
 function extractQcStatements(cert: forge.pki.Certificate): string[] {
   // qcStatements extension OID: 1.3.6.1.5.5.7.1.3
   const qcStatementsOid = "1.3.6.1.5.5.7.1.3";
-  
+
   const ext = cert.extensions?.find((e: any) => e.id === qcStatementsOid);
   if (!ext) return [];
 
@@ -1132,35 +1132,50 @@ function extractQcStatements(cert: forge.pki.Certificate): string[] {
   if (!asn1) return [];
 
   const statements: string[] = [];
+
+  // Mapping conforme alle specifiche ETSI EN 319 412-5, ETSI TS 101 862 ed eIDAS
   const oidDescriptions: Record<string, string> = {
-    "0.4.0.1862.1.1": "QCP-n (Qualified Certificate Policy - natural person)",
-    "0.4.0.1862.1.2": "QCP-l (Qualified Certificate Policy - legal person)",
-    "0.4.0.1862.1.3": "QCP-n-qscd (QC for natural person + QSCD)",
-    "0.4.0.1862.1.4": "QCP-l-qscd (QC for legal person + QSCD)",
-    "0.4.0.1862.1.6": "QCP-w (Web authentication)",
-    "0.4.0.194112.1.0": "QC-SSCD (Qualified Signature Creation Device)",
-    "0.4.0.194112.1.1": "QC Retention (Retention period defined)",
-    "0.4.0.194112.1.2": "QC Compliance (Compliance with qualified certificate requirements)",
-    "0.4.0.194112.1.3": "QC SSCD (Secure Signature Creation Device)",
-    "0.4.0.194112.1.4": "QC Type (Type of qualified certificate)",
-    "0.4.0.19122.1.1": "QCP-public-with-sscd",
-    "0.4.0.19122.1.2": "QC Statement"
+    // ETSI TS 101 862 / EN 319 412-5 - QC Statements Standard
+    "0.4.0.1862.1.1": "QC Compliance (id-etsi-qcs-QcCompliance - Certificato Qualificato eIDAS)",
+    "0.4.0.1862.1.2": "QC Limit Value (id-etsi-qcs-QcLimitValue - Limite del valore di transazione)",
+    "0.4.0.1862.1.3": "QC Retention Period (id-etsi-qcs-QcRetentionPeriod - Periodo di conservazione informazioni)",
+    "0.4.0.1862.1.4": "QC SSCD/QSCD (id-etsi-qcs-QcSSCD - Chiave memorizzata su dispositivo sicuro QSCD)",
+    "0.4.0.1862.1.5": "QC PDS (id-etsi-qcs-QcPds - PKI Disclosure Statements)",
+    "0.4.0.1862.1.6": "QC Type (id-etsi-qcs-QcType - Tipologia di certificato qualificato)",
+    "0.4.0.1862.1.7": "QC CC Legislation (id-etsi-qcs-QcCClegislation - Riferimenti normativi territoriali)",
+
+    // ETSI EN 319 412-5 - Qualified Certificate Types (eIDAS QC Types)
+    "0.4.0.194112.1.1": "id-etsi-qct-esign (Firma Elettronica Qualificata)",
+    "0.4.0.194112.1.2": "id-etsi-qct-eseal (Sigillo Elettronico Qualificato)",
+    "0.4.0.194112.1.3": "id-etsi-qct-web (Autenticazione Siti Web Qualificata / QWAC)",
+    "0.4.0.194112.1.4": "id-etsi-qct-psd2 (Certificato Qualificato per Servizi di Pagamento PSD2)",
+
+    // ETSI EN 319 411-1 / ETSI TS 102 042 - Certificate Policies (se presenti nell'estensione)
+    "0.4.0.2042.1.1": "QCP-n (Qualified Certificate Policy - Persona Fisica)",
+    "0.4.0.2042.1.2": "QCP-l (Qualified Certificate Policy - Persona Giuridica)",
+    "0.4.0.2042.1.3": "QCP-n-qscd (Qualified Certificate Policy - Persona Fisica su QSCD)",
+    "0.4.0.2042.1.4": "QCP-l-qscd (Qualified Certificate Policy - Persona Giuridica su QSCD)",
+    "0.4.0.2042.1.6": "QCP-w (Qualified Certificate Policy - Autenticazione Web)",
+
+    // Identificatori AgID / Normativa Italiana
+    "1.3.76.16.6": "Certificato di Firma Digitale (AgID)",
+    "1.3.76.16.6.1": "Carta Nazionale dei Servizi (CNS)"
   };
 
   const walk = (node: any) => {
     if (!node) return;
-    
-    // Look for OID values in the ASN.1 structure
-    if (node.tagClass === 0 && node.type === 6) { // OBJECT IDENTIFIER
+
+    // Ricerca dei nodi di tipo OBJECT IDENTIFIER
+    if (node.tagClass === 0 && node.type === 6) {
       try {
         const oid = forge.asn1.derToOid(node.value);
         const description = oidDescriptions[oid] || oid;
         statements.push(description);
       } catch {
-        // Ignore invalid OIDs
+        // Ignora OID non decodificabili correttamente
       }
     }
-    
+
     if (Array.isArray(node.value)) {
       node.value.forEach(walk);
     }
