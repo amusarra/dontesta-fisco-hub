@@ -818,6 +818,20 @@ export default function App() {
     });
   }, [invoices, selectedYears, selectedMonths, selectedSupplier, selectedCustomer, activeCompany]);
 
+  // Total invoices for active company (without temporal/supplier/customer filters)
+  // Used to show "k of x" where x is company-specific total
+  const companyInvoices = useMemo(() => {
+    if (!activeCompany || activeCompany.isDummy) {
+      return invoices; // Guest mode: show all
+    }
+    
+    return invoices.filter((inv) => {
+      const direction = getInvoiceDirection(inv, activeCompany);
+      // Exclude UNCLASSIFIED invoices when a company is selected
+      return direction !== "UNCLASSIFIED";
+    });
+  }, [invoices, activeCompany]);
+
   // Filter corrispettivi by active company
   const filteredCorrispettivi = useMemo(() => {
     if (!activeCompany || activeCompany.isDummy) {
@@ -1392,7 +1406,7 @@ export default function App() {
 
         {/* Quick database totals */}
         <div className="flex items-center gap-3 text-[11px] text-slate-400 font-mono">
-          <div>Fatture: <strong className="text-slate-800 font-bold font-sans">{filteredInvoices.length}</strong> su <strong className="text-slate-600 font-semibold font-sans">{invoices.length}</strong></div>
+          <div>Fatture: <strong className="text-slate-800 font-bold font-sans">{filteredInvoices.length}</strong> su <strong className="text-slate-600 font-semibold font-sans">{companyInvoices.length}</strong></div>
         </div>
       </div>
 
