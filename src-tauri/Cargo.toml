@@ -1,6 +1,6 @@
 [package]
 name = "dontesta-fiscohub"
-version = "1.0.0-RC1"
+version = "1.0.0-1"
 description = "Visualizzatore di Fatture Elettroniche e Corrispettivi XML scaricati dal Portale AdE"
 authors = ["Antonio Musarra <antonio.musarra@gmail.com>"]
 license = "MIT"

@@ -7,7 +7,7 @@ e questo progetto aderisce a [Semantic Versioning](https://semver.org/lang/it/).
 
 ---
 
-## [1.0.0-RC1] - 2026-08-01
+## [1.0.0-1] - 2026-08-01
 
 Prima release candidate di **DonTesta FiscoHub** - strumento open-source per visualizzare e analizzare fatture elettroniche e corrispettivi telematici scaricati dal Portale dell'Agenzia delle Entrate.
 
