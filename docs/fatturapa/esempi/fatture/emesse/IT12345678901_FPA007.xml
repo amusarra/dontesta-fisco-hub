@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<p:FatturaElettronica versione="FPA12" xmlns:p="http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2 http://www.fatturapa.gov.it/export/fatturazione/sdi/fatturapa/v1.2/Schema_del_file_xml_FatturaPA_versione_1.2.xsd">
+  <FatturaElettronicaHeader>
+    <DatiTrasmissione>
+      <IdTrasmittente><IdPaese>IT</IdPaese><IdCodice>12345678901</IdCodice></IdTrasmittente>
+      <ProgressivoInvio>FPA007</ProgressivoInvio>
+      <FormatoTrasmissione>FPA12</FormatoTrasmissione>
+      <CodiceDestinatario>KLMNOP</CodiceDestinatario>
+    </DatiTrasmissione>
+    <CedentePrestatore>
+      <DatiAnagrafici>
+        <IdFiscaleIVA><IdPaese>IT</IdPaese><IdCodice>12345678901</IdCodice></IdFiscaleIVA>
+        <CodiceFiscale>JDOAVZ68A28B202I</CodiceFiscale>
+        <Anagrafica><Nome>Judio</Nome><Cognome>Alvarez</Cognome></Anagrafica>
+        <RegimeFiscale>RF01</RegimeFiscale>
+      </DatiAnagrafici>
+      <Sede><Indirizzo>Via Leonardo Da Vinci 1</Indirizzo><CAP>95100</CAP><Comune>Catania</Comune><Provincia>CT</Provincia><Nazione>IT</Nazione></Sede>
+    </CedentePrestatore>
+    <CessionarioCommittente>
+      <DatiAnagrafici>
+        <IdFiscaleIVA><IdPaese>IT</IdPaese><IdCodice>03210980129</IdCodice></IdFiscaleIVA>
+        <CodiceFiscale>03210980129</CodiceFiscale>
+        <Anagrafica><Denominazione>Eta Informatica S.r.l.</Denominazione></Anagrafica>
+      </DatiAnagrafici>
+      <Sede><Indirizzo>Via Garibaldi 22</Indirizzo><CAP>16124</CAP><Comune>Genova</Comune><Provincia>GE</Provincia><Nazione>IT</Nazione></Sede>
+    </CessionarioCommittente>
+  </FatturaElettronicaHeader>
+  <FatturaElettronicaBody>
+    <DatiGenerali>
+      <DatiGeneraliDocumento>
+        <TipoDocumento>TD01</TipoDocumento><Divisa>EUR</Divisa><Data>2026-02-17</Data><Numero>FPA-007</Numero>
+        <ImportoTotaleDocumento>412.02</ImportoTotaleDocumento>
+        <Causale>Fornitura di beni e prestazione di servizi come da accordi.</Causale>
+      </DatiGeneraliDocumento>
+    </DatiGenerali>
+    <DatiBeniServizi>
+      <DettaglioLinee><NumeroLinea>1</NumeroLinea><Descrizione>Analisi dati aziendali</Descrizione><Quantita>2.00</Quantita><PrezzoUnitario>107.00</PrezzoUnitario><PrezzoTotale>214.00</PrezzoTotale><AliquotaIVA>22.00</AliquotaIVA></DettaglioLinee>
+      <DettaglioLinee><NumeroLinea>2</NumeroLinea><Descrizione>Reportistica avanzata</Descrizione><Quantita>1.00</Quantita><PrezzoUnitario>57.00</PrezzoUnitario><PrezzoTotale>57.00</PrezzoTotale><AliquotaIVA>22.00</AliquotaIVA></DettaglioLinee>
+      <DettaglioLinee><NumeroLinea>3</NumeroLinea><Descrizione>Formazione utenti</Descrizione><Quantita>2.00</Quantita><PrezzoUnitario>37.00</PrezzoUnitario><PrezzoTotale>74.00</PrezzoTotale><AliquotaIVA>10.00</AliquotaIVA></DettaglioLinee>
+      <DatiRiepilogo><AliquotaIVA>22.00</AliquotaIVA><ImponibileImporto>271.00</ImponibileImporto><Imposta>59.62</Imposta><EsigibilitaIVA>I</EsigibilitaIVA></DatiRiepilogo>
+      <DatiRiepilogo><AliquotaIVA>10.00</AliquotaIVA><ImponibileImporto>74.00</ImponibileImporto><Imposta>7.40</Imposta><EsigibilitaIVA>I</EsigibilitaIVA></DatiRiepilogo>
+    </DatiBeniServizi>
+    <DatiPagamento><CondizioniPagamento>TP02</CondizioniPagamento><DettaglioPagamento><ModalitaPagamento>MP05</ModalitaPagamento><DataScadenzaPagamento>2026-12-31</DataScadenzaPagamento><ImportoPagamento>412.02</ImportoPagamento><IBAN>IT60X0542811101000000123456</IBAN></DettaglioPagamento></DatiPagamento>
+    <Allegati>
+      <NomeAttachment>ordine-fpa-007.txt</NomeAttachment>
+      <FormatoAttachment>TXT</FormatoAttachment>
+      <DescrizioneAttachment>Riepilogo testuale dell'ordine del cliente</DescrizioneAttachment>
+      <Attachment>UmllcGlsb2dvIGRlbGwnb3JkaW5lIGRpIGFjcXVpc3Rv</Attachment>
+    </Allegati>
+  </FatturaElettronicaBody>
+</p:FatturaElettronica>
+

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<p:FatturaElettronica versione="FPA12" xmlns:p="http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2 http://www.fatturapa.gov.it/export/fatturazione/sdi/fatturapa/v1.2/Schema_del_file_xml_FatturaPA_versione_1.2.xsd">
+  <FatturaElettronicaHeader>
+    <DatiTrasmissione>
+      <IdTrasmittente><IdPaese>IT</IdPaese><IdCodice>12345678901</IdCodice></IdTrasmittente>
+      <ProgressivoInvio>FPA001</ProgressivoInvio>
+      <FormatoTrasmissione>FPA12</FormatoTrasmissione>
+      <CodiceDestinatario>ABCDEF</CodiceDestinatario>
+    </DatiTrasmissione>
+    <CedentePrestatore>
+      <DatiAnagrafici>
+        <IdFiscaleIVA><IdPaese>IT</IdPaese><IdCodice>12345678901</IdCodice></IdFiscaleIVA>
+        <CodiceFiscale>JDOAVZ68A28B202I</CodiceFiscale>
+        <Anagrafica><Nome>Judio</Nome><Cognome>Alvarez</Cognome></Anagrafica>
+        <RegimeFiscale>RF01</RegimeFiscale>
+      </DatiAnagrafici>
+      <Sede><Indirizzo>Via Leonardo Da Vinci 1</Indirizzo><CAP>95100</CAP><Comune>Catania</Comune><Provincia>CT</Provincia><Nazione>IT</Nazione></Sede>
+    </CedentePrestatore>
+    <CessionarioCommittente>
+      <DatiAnagrafici>
+        <IdFiscaleIVA><IdPaese>IT</IdPaese><IdCodice>09876540121</IdCodice></IdFiscaleIVA>
+        <CodiceFiscale>09876540121</CodiceFiscale>
+        <Anagrafica><Denominazione>Acme Servizi S.r.l.</Denominazione></Anagrafica>
+      </DatiAnagrafici>
+      <Sede><Indirizzo>Via Manzoni 12</Indirizzo><CAP>20121</CAP><Comune>Milano</Comune><Provincia>MI</Provincia><Nazione>IT</Nazione></Sede>
+    </CessionarioCommittente>
+  </FatturaElettronicaHeader>
+  <FatturaElettronicaBody>
+    <DatiGenerali>
+      <DatiGeneraliDocumento>
+        <TipoDocumento>TD01</TipoDocumento><Divisa>EUR</Divisa><Data>2026-02-11</Data><Numero>FPA-001</Numero>
+        <ImportoTotaleDocumento>376.86</ImportoTotaleDocumento>
+        <Causale>Fornitura di beni e prestazione di servizi come da accordi.</Causale>
+      </DatiGeneraliDocumento>
+    </DatiGenerali>
+    <DatiBeniServizi>
+      <DettaglioLinee><NumeroLinea>1</NumeroLinea><Descrizione>Licenza software gestionale</Descrizione><Quantita>2.00</Quantita><PrezzoUnitario>101.00</PrezzoUnitario><PrezzoTotale>202.00</PrezzoTotale><AliquotaIVA>22.00</AliquotaIVA></DettaglioLinee>
+      <DettaglioLinee><NumeroLinea>2</NumeroLinea><Descrizione>Assistenza tecnica annuale</Descrizione><Quantita>1.00</Quantita><PrezzoUnitario>51.00</PrezzoUnitario><PrezzoTotale>51.00</PrezzoTotale><AliquotaIVA>22.00</AliquotaIVA></DettaglioLinee>
+      <DettaglioLinee><NumeroLinea>3</NumeroLinea><Descrizione>Corso di formazione</Descrizione><Quantita>2.00</Quantita><PrezzoUnitario>31.00</PrezzoUnitario><PrezzoTotale>62.00</PrezzoTotale><AliquotaIVA>10.00</AliquotaIVA></DettaglioLinee>
+      <DatiRiepilogo><AliquotaIVA>22.00</AliquotaIVA><ImponibileImporto>253.00</ImponibileImporto><Imposta>55.66</Imposta><EsigibilitaIVA>I</EsigibilitaIVA></DatiRiepilogo>
+      <DatiRiepilogo><AliquotaIVA>10.00</AliquotaIVA><ImponibileImporto>62.00</ImponibileImporto><Imposta>6.20</Imposta><EsigibilitaIVA>I</EsigibilitaIVA></DatiRiepilogo>
+    </DatiBeniServizi>
+    <DatiPagamento><CondizioniPagamento>TP02</CondizioniPagamento><DettaglioPagamento><ModalitaPagamento>MP05</ModalitaPagamento><DataScadenzaPagamento>2026-12-31</DataScadenzaPagamento><ImportoPagamento>376.86</ImportoPagamento><IBAN>IT60X0542811101000000123456</IBAN></DettaglioPagamento></DatiPagamento>
+    <Allegati>
+      <NomeAttachment>ordine-fpa-001.txt</NomeAttachment>
+      <FormatoAttachment>TXT</FormatoAttachment>
+      <DescrizioneAttachment>Riepilogo testuale dell'ordine del cliente</DescrizioneAttachment>
+      <Attachment>UmllcGlsb2dvIGRlbGwnb3JkaW5lIGRpIGFjcXVpc3Rv</Attachment>
+    </Allegati>
+  </FatturaElettronicaBody>
+</p:FatturaElettronica>
+
