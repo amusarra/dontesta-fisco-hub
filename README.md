@@ -24,6 +24,51 @@ disponibile per il tuo sistema operativo (Windows, macOS o Linux).
 
 ---
 
+## 🚀 Prova Subito con Dati di Esempio
+
+Vuoi testare FiscoHub senza dover prima scaricare i tuoi dati dal Portale AdE? Abbiamo preparato file XML di esempio pronti all'uso!
+
+### 📦 Dati di Test Disponibili
+
+Nel repository trovi oltre **130 file di esempio** in `docs/fatturapa/esempi/`:
+
+- **20 Fatture Emesse** (`fatture/emesse/IT12345678901_FPA*.xml`)
+- **20 Fatture Ricevute** (`fatture/ricevute/IT12345678901_FPR*.xml`)
+- **~100 Corrispettivi Telematici** (`corrispettivi/CORR_IT12345678901_*.xml`)
+
+Tutti i documenti sono intestati all'azienda di esempio:
+
+```
+Ragione Sociale: Judio Alvarez
+Partita IVA: IT12345678901
+Codice Fiscale: JDOAVZ68A28B202I
+Indirizzo: Via Leonardo Da Vinci 1, 95100 Catania (CT)
+```
+
+### 🎯 Come Provare
+
+**Opzione 1: Modalità Guest** (senza configurare aziende)
+1. Avvia FiscoHub
+2. Seleziona "Continua come Guest" nella schermata iniziale
+3. Trascina l'intera cartella `docs/fatturapa/esempi` nell'applicazione
+4. Esplora fatture, corrispettivi e analytics!
+
+**Opzione 2: Con Azienda Configurata** (esperienza completa)
+1. Avvia FiscoHub
+2. Crea una nuova azienda con i dati di "Judio Alvarez" (vedi sopra)
+3. Importa i file dalla cartella `docs/fatturapa/esempi`
+4. Visualizza la classificazione automatica (emesse/ricevute)
+5. Esplora le analytics con filtri multi-azienda
+
+### 📍 Dove Trovare i File
+
+Puoi scaricare i file di esempio in due modi:
+
+- **Dal repository GitHub**: [docs/fatturapa/esempi](https://github.com/amusarra/fattura-pa-reader/tree/main/docs/fatturapa/esempi)
+- **Clonando il repo**: `git clone https://github.com/amusarra/fattura-pa-reader.git`
+
+---
+
 ## 📥 Come utilizzare l'applicazione
 
 ### Flusso di lavoro consigliato
