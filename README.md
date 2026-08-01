@@ -50,13 +50,13 @@ Indirizzo: Via Leonardo Da Vinci 1, 95100 Catania (CT)
 **Opzione 1: Modalità Guest** (senza configurare aziende)
 1. Avvia FiscoHub
 2. Seleziona "Continua come Guest" nella schermata iniziale
-3. Trascina l'intera cartella `docs/fatturapa/esempi` nell'applicazione
-4. Esplora fatture, corrispettivi e analytics!
+3. Dall'hamburger menu, dalla sezione Impostazioni, seleziona come directory di lavoro la cartella `docs/fatturapa/esempi`
+4. Esplora fatture, corrispettivi! (Gli analytics multi-azienda sono disabilitati in modalità Guest)
 
 **Opzione 2: Con Azienda Configurata** (esperienza completa)
 1. Avvia FiscoHub
 2. Crea una nuova azienda con i dati di "Judio Alvarez" (vedi sopra)
-3. Importa i file dalla cartella `docs/fatturapa/esempi`
+3. Dall'hamburger menu, dalla sezione Impostazioni, seleziona come directory di lavoro la cartella `docs/fatturapa/esempi`
 4. Visualizza la classificazione automatica (emesse/ricevute)
 5. Esplora le analytics con filtri multi-azienda
 
@@ -79,7 +79,7 @@ Puoi scaricare i file di esempio in due modi:
    - Scarica i corrispettivi telematici dalla sezione dedicata
 
 2. **Importa i file in DonTesta FiscoHub**
-   - Carica i file XML tramite drag & drop o seleziona una cartella
+   - Carica i file XML impostando una cartella come directory di lavoro
    - L'applicazione riconosce automaticamente fatture e corrispettivi
    - Tutti i dati rimangono sul tuo dispositivo (elaborazione 100% locale)
 
