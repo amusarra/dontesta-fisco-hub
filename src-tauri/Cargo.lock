@@ -785,7 +785,7 @@ dependencies = [
 
 [[package]]
 name = "dontesta-fiscohub"
-version = "1.0.0"
+version = "1.0.0-RC1"
 dependencies = [
  "serde",
  "serde_json",

@@ -1,7 +1,7 @@
 {
   "name": "DonTesta FiscoHub",
   "description": "Visualizzatore open-source e cross-platform per fatture elettroniche e corrispettivi XML, supportato dal Blog di Antonio Musarra (dontesta.it).",
-  "version": "1.0.0",
+  "version": "1.0.0-RC1",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
