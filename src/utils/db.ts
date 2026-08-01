@@ -140,7 +140,7 @@ export async function loadInvoicesFromDB(): Promise<InvoiceRecord[]> {
  * Clears the store first so deleted invoices are removed.
  */
 export async function saveInvoicesToDB(
-  invoices: { fileName: string; rawXml: string; rawP7mBase64?: string }[]
+  invoices: { fileName: string; rawXml: string; rawP7mBase64?: string; uploadedBy?: string }[]
 ): Promise<void> {
   const db = await getDB();
   const tx = db.transaction(STORE_NAME, "readwrite");
@@ -150,7 +150,8 @@ export async function saveInvoicesToDB(
       id: inv.fileName,
       fileName: inv.fileName,
       rawXml: inv.rawXml,
-      rawP7mBase64: inv.rawP7mBase64
+      rawP7mBase64: inv.rawP7mBase64,
+      uploadedBy: inv.uploadedBy
     });
   }
   await tx.done;

@@ -399,8 +399,7 @@ export default function App() {
           const updated = deduplicateInvoices([...filteredPrev, ...newInvoicesWithUploadedBy]);
           
           saveInvoicesToDB(
-            updated.map((u) => ({ fileName: u.fileName, rawXml: u.rawXml, rawP7mBase64: u.rawP7mBase64 })),
-            uploadedBy
+            updated.map((u) => ({ fileName: u.fileName, rawXml: u.rawXml, rawP7mBase64: u.rawP7mBase64, uploadedBy: u.uploadedBy }))
           ).catch(
             (err) => console.error("[DB] Errore nel salvataggio fatture (cartella):", err)
           );
@@ -655,8 +654,7 @@ export default function App() {
         const updated = deduplicateInvoices([...filteredPrev, ...newInvoicesWithUploadedBy]);
         
         saveInvoicesToDB(
-          updated.map((u) => ({ fileName: u.fileName, rawXml: u.rawXml, rawP7mBase64: u.rawP7mBase64 })),
-          uploadedBy
+          updated.map((u) => ({ fileName: u.fileName, rawXml: u.rawXml, rawP7mBase64: u.rawP7mBase64, uploadedBy: u.uploadedBy }))
         ).catch(
           (err) => console.error("[DB] Errore nel salvataggio fatture (upload):", err)
         );
@@ -810,9 +808,9 @@ export default function App() {
             remainingInvoices.map(inv => ({
               fileName: inv.fileName,
               rawXml: inv.rawXml,
-              rawP7mBase64: inv.rawP7mBase64
-            })),
-            getCurrentUploadedBy()
+              rawP7mBase64: inv.rawP7mBase64,
+              uploadedBy: inv.uploadedBy
+            }))
           ).catch((err) => console.error("[DB] Errore salvataggio fatture DB:", err));
           
           // Rebuild line items for remaining invoices
@@ -847,9 +845,9 @@ export default function App() {
             remainingInvoices.map(inv => ({
               fileName: inv.fileName,
               rawXml: inv.rawXml,
-              rawP7mBase64: inv.rawP7mBase64
-            })),
-            getCurrentUploadedBy()
+              rawP7mBase64: inv.rawP7mBase64,
+              uploadedBy: inv.uploadedBy
+            }))
           ).catch((err) => console.error("[DB] Errore salvataggio fatture DB:", err));
           
           // Rebuild line items for remaining invoices
@@ -890,6 +888,19 @@ export default function App() {
   // Delete invoices (single or multiple) from local state and localStorage
   const handleDeleteInvoices = (idsToDelete: string[]) => {
     if (idsToDelete.length === 0) return;
+    
+    // Protezione Guest: verifica che tutte le fatture da eliminare appartengano all'utente corrente
+    const currentUploadedBy = getCurrentUploadedBy();
+    const invoicesToCheck = invoices.filter(inv => idsToDelete.includes(inv.id));
+    const unauthorizedDeletes = invoicesToCheck.filter(inv => 
+      inv.uploadedBy && inv.uploadedBy !== currentUploadedBy
+    );
+    
+    if (unauthorizedDeletes.length > 0) {
+      addToast("Non puoi eliminare fatture caricate da altri utenti o aziende.", "error");
+      return;
+    }
+    
     const isSingle = idsToDelete.length === 1;
     const confirmMessage = isSingle
       ? "Sei sicuro di voler eliminare questa fattura? Questa operazione è irreversibile."
@@ -902,8 +913,7 @@ export default function App() {
         setInvoices((prev) => {
           const updated = prev.filter((inv) => !idsToDelete.includes(inv.id));
           saveInvoicesToDB(
-            updated.map((u) => ({ fileName: u.fileName, rawXml: u.rawXml, rawP7mBase64: u.rawP7mBase64 })),
-            getCurrentUploadedBy()
+            updated.map((u) => ({ fileName: u.fileName, rawXml: u.rawXml, rawP7mBase64: u.rawP7mBase64, uploadedBy: u.uploadedBy }))
           ).catch(
             (err) => console.error("[DB] Errore nel salvataggio dopo eliminazione:", err)
           );
