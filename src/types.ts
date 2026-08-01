@@ -146,6 +146,9 @@ export interface FatturaElettronica {
 
   // Internal persistence field used to re-hydrate certificate details for .p7m files.
   rawP7mBase64?: string;
+  
+  // Guest isolation field (v6) - tracks which user/company uploaded this invoice
+  uploadedBy?: string; // "GUEST" for guest uploads, company.id for company uploads, undefined for legacy
 }
 
 // Map of Document Types (TipoDocumento)
@@ -251,6 +254,9 @@ export interface DatiCorrispettivi {
   ticketPagato: number;
   numeroTicket?: number;
   scontoApagare: number;
+  
+  // Guest isolation field (v6) - tracks which user/company uploaded this corrispettivo
+  uploadedBy?: string; // "GUEST" for guest uploads, company.id for company uploads, undefined for legacy
 }
 
 export const TIPO_DISPOSITIVO_MAP: Record<string, string> = {

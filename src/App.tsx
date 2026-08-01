@@ -287,6 +287,13 @@ export default function App() {
     };
   }, []);
 
+  // Helper: Get current uploadedBy value for saving data (v6 Guest isolation)
+  const getCurrentUploadedBy = (): string => {
+    // If activeCompany is not yet initialized, default to "GUEST"
+    if (!activeCompany) return "GUEST";
+    return activeCompany.isDummy ? "GUEST" : activeCompany.id;
+  };
+
   // Handle PDF export directory selection with Tauri dialog
   const handleSelectPdfExportDirectory = async () => {
     try {
@@ -384,9 +391,17 @@ export default function App() {
       if (newInvoices.length > 0) {
         setInvoices((prev) => {
           const filteredPrev = prev.filter((p) => !newInvoices.some((n) => n.id === p.id));
-          const updated = deduplicateInvoices([...filteredPrev, ...newInvoices]);
           
-          saveInvoicesToDB(updated.map((u) => ({ fileName: u.fileName, rawXml: u.rawXml, rawP7mBase64: u.rawP7mBase64 }))).catch(
+          // Add uploadedBy to new invoices
+          const uploadedBy = getCurrentUploadedBy();
+          const newInvoicesWithUploadedBy = newInvoices.map(inv => ({ ...inv, uploadedBy }));
+          
+          const updated = deduplicateInvoices([...filteredPrev, ...newInvoicesWithUploadedBy]);
+          
+          saveInvoicesToDB(
+            updated.map((u) => ({ fileName: u.fileName, rawXml: u.rawXml, rawP7mBase64: u.rawP7mBase64 })),
+            uploadedBy
+          ).catch(
             (err) => console.error("[DB] Errore nel salvataggio fatture (cartella):", err)
           );
           
@@ -403,8 +418,16 @@ export default function App() {
       if (newCorrispettivi.length > 0) {
         setCorrispettivi((prev) => {
           const filteredPrev = prev.filter((p) => !newCorrispettivi.some((n) => n.id === p.id));
-          const updated = [...filteredPrev, ...newCorrispettivi];
-          saveCorrispettiviToDB(updated.map((u) => ({ fileName: u.fileName, rawXml: u.rawXml }))).catch(
+          
+          // Add uploadedBy to new corrispettivi
+          const uploadedBy = getCurrentUploadedBy();
+          const newCorrWithUploadedBy = newCorrispettivi.map(corr => ({ ...corr, uploadedBy }));
+          
+          const updated = [...filteredPrev, ...newCorrWithUploadedBy];
+          saveCorrispettiviToDB(
+            updated.map((u) => ({ fileName: u.fileName, rawXml: u.rawXml })),
+            uploadedBy
+          ).catch(
             (err) => console.error("[DB] Errore nel salvataggio corrispettivi (cartella):", err)
           );
           return updated;
@@ -490,22 +513,20 @@ export default function App() {
         await migrateFromLocalStorage();
 
         const records = await loadInvoicesFromDB();
+        
         if (records.length > 0) {
           const loadedInvoices = records.map((f) => {
             const isP7m = f.fileName.toLowerCase().endsWith(".p7m");
             const p7mBytes = isP7m ? base64ToBytes(f.rawP7mBase64) : undefined;
             const parsed = parseFatturaXML(f.rawXml, f.fileName, p7mBytes);
-            return isP7m && f.rawP7mBase64 ? { ...parsed, rawP7mBase64: f.rawP7mBase64 } : parsed;
+            
+            // Preserve uploadedBy from database record
+            const withUploadedBy = { ...parsed, uploadedBy: f.uploadedBy };
+            
+            return isP7m && f.rawP7mBase64 ? { ...withUploadedBy, rawP7mBase64: f.rawP7mBase64 } : withUploadedBy;
           });
           const deduplicated = deduplicateInvoices(loadedInvoices);
           setInvoices(deduplicated);
-
-          // Persist cleaned list back if duplicates were removed
-          if (deduplicated.length !== loadedInvoices.length) {
-            await saveInvoicesToDB(
-              deduplicated.map((u) => ({ fileName: u.fileName, rawXml: u.rawXml, rawP7mBase64: u.rawP7mBase64 }))
-            );
-          }
 
           // Extract and save line items to IndexedDB for Top Beni e Servizi feature
           await extractAndSaveLineItems(deduplicated, currentCompanyPiva);
@@ -519,8 +540,13 @@ export default function App() {
 
         // Load Corrispettivi from DB
         const corrRecords = await loadCorrispettiviFromDB();
+        
         if (corrRecords.length > 0) {
-          const loadedCorr = corrRecords.map((c) => parseCorrispettivoXML(c.rawXml, c.fileName));
+          const loadedCorr = corrRecords.map((c) => {
+            const parsed = parseCorrispettivoXML(c.rawXml, c.fileName);
+            // Preserve uploadedBy from database record
+            return { ...parsed, uploadedBy: c.uploadedBy };
+          });
           setCorrispettivi(loadedCorr);
         } else {
           setCorrispettivi([]);
@@ -621,9 +647,17 @@ export default function App() {
     if (newInvoices.length > 0) {
       setInvoices((prev) => {
         const filteredPrev = prev.filter((p) => !newInvoices.some((n) => n.id === p.id));
-        const updated = deduplicateInvoices([...filteredPrev, ...newInvoices]);
         
-        saveInvoicesToDB(updated.map((u) => ({ fileName: u.fileName, rawXml: u.rawXml, rawP7mBase64: u.rawP7mBase64 }))).catch(
+        // Add uploadedBy to new invoices
+        const uploadedBy = getCurrentUploadedBy();
+        const newInvoicesWithUploadedBy = newInvoices.map(inv => ({ ...inv, uploadedBy }));
+        
+        const updated = deduplicateInvoices([...filteredPrev, ...newInvoicesWithUploadedBy]);
+        
+        saveInvoicesToDB(
+          updated.map((u) => ({ fileName: u.fileName, rawXml: u.rawXml, rawP7mBase64: u.rawP7mBase64 })),
+          uploadedBy
+        ).catch(
           (err) => console.error("[DB] Errore nel salvataggio fatture (upload):", err)
         );
         
@@ -640,8 +674,16 @@ export default function App() {
     if (newCorrispettivi.length > 0) {
       setCorrispettivi((prev) => {
         const filteredPrev = prev.filter((p) => !newCorrispettivi.some((n) => n.id === p.id));
-        const updated = [...filteredPrev, ...newCorrispettivi];
-        saveCorrispettiviToDB(updated.map((u) => ({ fileName: u.fileName, rawXml: u.rawXml }))).catch(
+        
+        // Add uploadedBy to new corrispettivi
+        const uploadedBy = getCurrentUploadedBy();
+        const newCorrWithUploadedBy = newCorrispettivi.map(corr => ({ ...corr, uploadedBy }));
+        
+        const updated = [...filteredPrev, ...newCorrWithUploadedBy];
+        saveCorrispettiviToDB(
+          updated.map((u) => ({ fileName: u.fileName, rawXml: u.rawXml })),
+          uploadedBy
+        ).catch(
           (err) => console.error("[DB] Errore nel salvataggio corrispettivi (upload):", err)
         );
         return updated;
@@ -666,7 +708,10 @@ export default function App() {
       () => {
         setCorrispettivi((prev) => {
           const updated = prev.filter((c) => c.id !== id);
-          saveCorrispettiviToDB(updated.map((u) => ({ fileName: u.fileName, rawXml: u.rawXml }))).catch(
+          saveCorrispettiviToDB(
+            updated.map((u) => ({ fileName: u.fileName, rawXml: u.rawXml })),
+            getCurrentUploadedBy()
+          ).catch(
             (err) => console.error("[DB] Errore nel salvataggio corrispettivi:", err)
           );
           return updated;
@@ -703,7 +748,10 @@ export default function App() {
           });
           
           setCorrispettivi(remainingCorrispettivi);
-          saveCorrispettiviToDB(remainingCorrispettivi.map(c => ({ fileName: c.fileName, rawXml: c.rawXml })))
+          saveCorrispettiviToDB(
+            remainingCorrispettivi.map(c => ({ fileName: c.fileName, rawXml: c.rawXml })),
+            getCurrentUploadedBy()
+          )
             .catch((err) => console.error("[DB] Errore salvataggio corrispettivi DB:", err));
           
           const deletedCount = corrispettivi.length - remainingCorrispettivi.length;
@@ -713,14 +761,25 @@ export default function App() {
         true
       );
     } else {
-      // Guest mode: delete ALL corrispettivi (original behavior)
+      // Guest mode: delete only GUEST corrispettivi (v6 Guest isolation)
       triggerConfirm(
         "Svuota Corrispettivi",
-        "Sei sicuro di voler eliminare definitivamente tutti i dati dei corrispettivi salvati?",
+        "Sei sicuro di voler eliminare definitivamente tutti i tuoi corrispettivi salvati?",
         () => {
-          setCorrispettivi([]);
-          clearCorrispettiviDB().catch((err) => console.error("[DB] Errore eliminazione corrispettivi DB:", err));
-          addToast("Tutti i corrispettivi sono stati eliminati.", "info");
+          // Keep only corrispettivi NOT uploaded by Guest
+          const remainingCorrispettivi = corrispettivi.filter((corr) => {
+            // Keep if uploadedBy is not "GUEST" (company uploads + legacy)
+            return corr.uploadedBy !== "GUEST";
+          });
+          
+          setCorrispettivi(remainingCorrispettivi);
+          saveCorrispettiviToDB(
+            remainingCorrispettivi.map(c => ({ fileName: c.fileName, rawXml: c.rawXml })),
+            getCurrentUploadedBy()
+          ).catch((err) => console.error("[DB] Errore salvataggio corrispettivi DB:", err));
+          
+          const deletedCount = corrispettivi.length - remainingCorrispettivi.length;
+          addToast(`Eliminati ${deletedCount} corrispettivi.`, "info");
         },
         "Svuota",
         true
@@ -747,11 +806,14 @@ export default function App() {
           setInvoices(remainingInvoices);
           setSelectedInvoice(null);
           
-          saveInvoicesToDB(remainingInvoices.map(inv => ({
-            fileName: inv.fileName,
-            rawXml: inv.rawXml,
-            rawP7mBase64: inv.rawP7mBase64
-          }))).catch((err) => console.error("[DB] Errore salvataggio fatture DB:", err));
+          saveInvoicesToDB(
+            remainingInvoices.map(inv => ({
+              fileName: inv.fileName,
+              rawXml: inv.rawXml,
+              rawP7mBase64: inv.rawP7mBase64
+            })),
+            getCurrentUploadedBy()
+          ).catch((err) => console.error("[DB] Errore salvataggio fatture DB:", err));
           
           // Rebuild line items for remaining invoices
           clearLineItemsDB().then(() => {
@@ -767,28 +829,46 @@ export default function App() {
         true
       );
     } else {
-      // Guest mode: delete ALL invoices (original behavior)
+      // Guest mode: delete only GUEST invoices (v6 Guest isolation)
       triggerConfirm(
-        "Elimina Tutti i Dati",
-        "Sei sicuro di voler eliminare definitivamente tutte le fatture caricate? Questa operazione non può essere annullata.",
+        "Elimina Fatture Guest",
+        "Sei sicuro di voler eliminare definitivamente tutte le tue fatture caricate? Questa operazione non può essere annullata.",
         () => {
-          setInvoices([]);
+          // Keep only invoices NOT uploaded by Guest
+          const remainingInvoices = invoices.filter((inv) => {
+            // Keep if uploadedBy is not "GUEST" (company uploads + legacy)
+            return inv.uploadedBy !== "GUEST";
+          });
+          
+          setInvoices(remainingInvoices);
           setSelectedInvoice(null);
-          clearInvoicesDB().catch(
-            (err) => console.error("[DB] Errore nell'eliminazione del database:", err)
-          );
-          clearLineItemsDB().catch(
-              (err) => console.error("[DB] Errore nell'eliminazione delle linee dettaglio:", err)
-          );
+          
+          saveInvoicesToDB(
+            remainingInvoices.map(inv => ({
+              fileName: inv.fileName,
+              rawXml: inv.rawXml,
+              rawP7mBase64: inv.rawP7mBase64
+            })),
+            getCurrentUploadedBy()
+          ).catch((err) => console.error("[DB] Errore salvataggio fatture DB:", err));
+          
+          // Rebuild line items for remaining invoices
+          clearLineItemsDB().then(() => {
+            if (remainingInvoices.length > 0) {
+              extractAndSaveLineItems(remainingInvoices);
+            }
+          }).catch((err) => console.error("[DB] Errore ricostruzione line items:", err));
+          
           // Reset active filters
           setSelectedYears([]);
           setSelectedMonths([]);
           setSelectedSupplier(null);
           setSelectedCustomer(null);
 
-          addToast("Tutti i dati caricati sono stati eliminati con successo.", "info");
+          const deletedCount = invoices.length - remainingInvoices.length;
+          addToast(`Eliminate ${deletedCount} fatture.`, "info");
         },
-        "Elimina Tutto",
+        "Elimina",
         true
       );
     }
@@ -821,7 +901,10 @@ export default function App() {
       () => {
         setInvoices((prev) => {
           const updated = prev.filter((inv) => !idsToDelete.includes(inv.id));
-          saveInvoicesToDB(updated.map((u) => ({ fileName: u.fileName, rawXml: u.rawXml, rawP7mBase64: u.rawP7mBase64 }))).catch(
+          saveInvoicesToDB(
+            updated.map((u) => ({ fileName: u.fileName, rawXml: u.rawXml, rawP7mBase64: u.rawP7mBase64 })),
+            getCurrentUploadedBy()
+          ).catch(
             (err) => console.error("[DB] Errore nel salvataggio dopo eliminazione:", err)
           );
 
@@ -856,7 +939,16 @@ export default function App() {
   // Core filtering logic for middle list & left sidebar highlights
   const filteredInvoices = useMemo(() => {
     return invoices.filter((inv) => {
-      // 0. Company Filter (Active Company) - filtra fatture per azienda attiva
+      // 0a. Guest Isolation Filter (v6) - filtra per uploadedBy
+      if (activeCompany) {
+        const expectedUploadedBy = activeCompany.isDummy ? "GUEST" : activeCompany.id;
+        // Keep only invoices uploaded by current user/company + legacy (undefined)
+        if (inv.uploadedBy && inv.uploadedBy !== expectedUploadedBy) {
+          return false;
+        }
+      }
+
+      // 0b. Company Filter (Active Company) - filtra fatture per azienda attiva
       if (activeCompany && !activeCompany.isDummy) {
         const direction = getInvoiceDirection(inv, activeCompany);
         // Escludi fatture non classificate (UNCLASSIFIED) quando un'azienda è selezionata
@@ -908,10 +1000,21 @@ export default function App() {
   // Filter corrispettivi by active company
   const filteredCorrispettivi = useMemo(() => {
     if (!activeCompany || activeCompany.isDummy) {
-      return corrispettivi;
+      // Guest mode: show only GUEST uploads + legacy
+      return corrispettivi.filter((corr) => {
+        if (!corr.uploadedBy) return true; // Legacy records
+        return corr.uploadedBy === "GUEST";
+      });
     }
 
+    // Company mode: show only company uploads + legacy, and match company P.IVA/CF
     return corrispettivi.filter((corr) => {
+      // Filter by uploadedBy
+      if (corr.uploadedBy && corr.uploadedBy !== activeCompany.id) {
+        return false;
+      }
+      
+      // Filter by company P.IVA/CF
       const matchesPiva = corr.pivaEsercente === activeCompany.partitaIva;
       const matchesCf = activeCompany.codiceFiscale && corr.cfEsercente === activeCompany.codiceFiscale;
       return matchesPiva || matchesCf;

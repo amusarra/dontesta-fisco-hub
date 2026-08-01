@@ -13,7 +13,7 @@
 import { openDB, IDBPDatabase } from "idb";
 
 const DB_NAME = "fattura_pa_reader_db";
-const DB_VERSION = 5;  // Increased for cessionarioId field in line items
+const DB_VERSION = 6;  // Increased for uploadedBy field (Guest isolation)
 const STORE_NAME = "invoices";
 const COMPANY_STORE_NAME = "companies";
 const CORRISPETTIVI_STORE_NAME = "corrispettivi";
@@ -27,12 +27,14 @@ export interface InvoiceRecord {
   fileName: string;
   rawXml: string;
   rawP7mBase64?: string;
+  uploadedBy?: string;  // Company ID or "GUEST" for guest uploads (v6)
 }
 
 export interface CorrispettivoRecord {
   id: string;       // equals fileName — used as keyPath
   fileName: string;
   rawXml: string;
+  uploadedBy?: string;  // Company ID or "GUEST" for guest uploads (v6)
 }
 
 export interface LineItemRecord {
@@ -110,6 +112,14 @@ async function getDB(): Promise<IDBPDatabase<any>> {
         lineStore.createIndex("descrizione", "descrizione", { unique: false });
         lineStore.createIndex("fatturaId", "fatturaId", { unique: false });
       }
+      
+      // v5 → v6: uploadedBy field added to invoices and corrispettivi
+      // No schema change needed - just add field to new records
+      // Existing records will have uploadedBy = undefined (treated as legacy data visible to all)
+      if (oldVersion < 6) {
+        console.log("[DB] Upgraded to v6: uploadedBy field added for Guest isolation");
+        console.log("[DB] Legacy records without uploadedBy are visible to all users");
+      }
     },
   });
   return _db;
@@ -164,9 +174,12 @@ export async function loadCorrispettiviFromDB(): Promise<CorrispettivoRecord[]> 
 
 /**
  * Persists the full corrispettivi list to IndexedDB.
+ * @param corrispettivi Array of corrispettivi records to save
+ * @param uploadedBy Optional company ID or "GUEST" to track ownership
  */
 export async function saveCorrispettiviToDB(
-  corrispettivi: { fileName: string; rawXml: string }[]
+  corrispettivi: { fileName: string; rawXml: string }[],
+  uploadedBy?: string
 ): Promise<void> {
   const db = await getDB();
   const tx = db.transaction(CORRISPETTIVI_STORE_NAME, "readwrite");
@@ -175,7 +188,8 @@ export async function saveCorrispettiviToDB(
     await tx.store.put({
       id: corr.fileName,
       fileName: corr.fileName,
-      rawXml: corr.rawXml
+      rawXml: corr.rawXml,
+      uploadedBy,  // v6: track who uploaded this corrispettivo
     });
   }
   await tx.done;

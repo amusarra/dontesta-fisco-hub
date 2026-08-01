@@ -6,7 +6,7 @@ import { openDB, IDBPDatabase } from "idb";
 import { Azienda, FatturaElettronica, InvoiceDirection } from "../types";
 
 const DB_NAME = "fattura_pa_reader_db";
-const DB_VERSION = 5;  // Updated to match db.ts
+const DB_VERSION = 6;  // Updated to match db.ts - uploadedBy field
 const COMPANY_STORE = "companies";
 const LS_ACTIVE_COMPANY_KEY = "dontesta_active_company_id";
 
