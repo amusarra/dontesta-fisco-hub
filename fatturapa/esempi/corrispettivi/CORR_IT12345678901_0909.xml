@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?><n1:DatiCorrispettivi xmlns:n1="http://ivaservizi.agenziaentrate.gov.it/docs/xsd/corrispettivi/dati/v1.0" versione="COR10" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Trasmissione>
+    <Progressivo>909</Progressivo>
+    <Formato>COR10</Formato>
+    <Dispositivo>
+      <Tipo>RT</Tipo>
+      <IdDispositivo>72EU7099221</IdDispositivo>
+    </Dispositivo>
+    <CodiceFiscaleEsercente>JDOAVZ68A28B202I</CodiceFiscaleEsercente>
+    <PIVAEsercente>12345678901</PIVAEsercente>
+    <DataOraTrasmissione>2026-01-12T12:06:12+01:00</DataOraTrasmissione>
+  </Trasmissione>
+  <DataOraRilevazione>2026-01-10T23:59:59+01:00</DataOraRilevazione>
+  <DatiRT>
+    <Riepilogo>
+      <IVA>
+        <AliquotaIVA>10.00</AliquotaIVA>
+        <Imposta>12.26</Imposta>
+      </IVA>
+      <Ammontare>134.86</Ammontare>
+      <ImportoParziale>134.86</ImportoParziale>
+    </Riepilogo>
+    <Riepilogo>
+      <IVA>
+        <AliquotaIVA>4.00</AliquotaIVA>
+        <Imposta>2.28</Imposta>
+      </IVA>
+      <Ammontare>59.18</Ammontare>
+      <ImportoParziale>59.18</ImportoParziale>
+    </Riepilogo>
+    <Totali>
+      <NumeroDocCommerciali>5</NumeroDocCommerciali>
+      <PagatoElettronico>194.04</PagatoElettronico>
+    </Totali>
+  </DatiRT>
+</n1:DatiCorrispettivi>
