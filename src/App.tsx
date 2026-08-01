@@ -680,45 +680,118 @@ export default function App() {
 
   // Clear all corrispettivi
   const handleClearAllCorrispettivi = () => {
-    triggerConfirm(
-      "Svuota Corrispettivi",
-      "Sei sicuro di voler eliminare definitivamente tutti i dati dei corrispettivi salvati?",
-      () => {
-        setCorrispettivi([]);
-        clearCorrispettiviDB().catch((err) => console.error("[DB] Errore eliminazione corrispettivi DB:", err));
-        addToast("Tutti i corrispettivi sono stati eliminati.", "info");
-      },
-      "Svuota",
-      true
-    );
+    // If a specific company is selected, delete only that company's corrispettivi
+    if (activeCompany && !activeCompany.isDummy) {
+      const companyName = activeCompany.denominazione || activeCompany.nome || "azienda selezionata";
+      triggerConfirm(
+        "Svuota Corrispettivi",
+        `Sei sicuro di voler eliminare definitivamente tutti i corrispettivi di ${companyName}?`,
+        () => {
+          // Filter out corrispettivi belonging to the current company
+          const companyPiva = activeCompany.partitaIva?.trim().toUpperCase().replace(/^IT/, '');
+          const companyCf = activeCompany.codiceFiscale?.trim().toUpperCase();
+          
+          const remainingCorrispettivi = corrispettivi.filter((corr) => {
+            const corrPiva = corr.pivaEsercente?.trim().toUpperCase().replace(/^IT/, '');
+            const corrCf = corr.cfEsercente?.trim().toUpperCase();
+            
+            const matchesPiva = companyPiva && corrPiva === companyPiva;
+            const matchesCf = companyCf && corrCf === companyCf;
+            
+            // Keep corrispettivi that DON'T match the current company
+            return !(matchesPiva || matchesCf);
+          });
+          
+          setCorrispettivi(remainingCorrispettivi);
+          saveCorrispettiviToDB(remainingCorrispettivi.map(c => ({ fileName: c.fileName, rawXml: c.rawXml })))
+            .catch((err) => console.error("[DB] Errore salvataggio corrispettivi DB:", err));
+          
+          const deletedCount = corrispettivi.length - remainingCorrispettivi.length;
+          addToast(`Eliminati ${deletedCount} corrispettivi di ${companyName}.`, "info");
+        },
+        "Svuota",
+        true
+      );
+    } else {
+      // Guest mode: delete ALL corrispettivi (original behavior)
+      triggerConfirm(
+        "Svuota Corrispettivi",
+        "Sei sicuro di voler eliminare definitivamente tutti i dati dei corrispettivi salvati?",
+        () => {
+          setCorrispettivi([]);
+          clearCorrispettiviDB().catch((err) => console.error("[DB] Errore eliminazione corrispettivi DB:", err));
+          addToast("Tutti i corrispettivi sono stati eliminati.", "info");
+        },
+        "Svuota",
+        true
+      );
+    }
   };
 
   // Clear all database files
   const handleResetDatabase = () => {
+    // If a specific company is selected, delete only that company's invoices
+    if (activeCompany && !activeCompany.isDummy) {
+      const companyName = activeCompany.denominazione || activeCompany.nome || "azienda selezionata";
+      triggerConfirm(
+        "Elimina Fatture Azienda",
+        `Sei sicuro di voler eliminare definitivamente tutte le fatture di ${companyName}? Questa operazione non può essere annullata.`,
+        () => {
+          // Filter out invoices belonging to the current company
+          const remainingInvoices = invoices.filter((inv) => {
+            const direction = getInvoiceDirection(inv, activeCompany);
+            // Keep invoices that are UNCLASSIFIED (don't belong to this company)
+            return direction === "UNCLASSIFIED";
+          });
+          
+          setInvoices(remainingInvoices);
+          setSelectedInvoice(null);
+          
+          saveInvoicesToDB(remainingInvoices.map(inv => ({
+            fileName: inv.fileName,
+            rawXml: inv.rawXml,
+            rawP7mBase64: inv.rawP7mBase64
+          }))).catch((err) => console.error("[DB] Errore salvataggio fatture DB:", err));
+          
+          // Rebuild line items for remaining invoices
+          clearLineItemsDB().then(() => {
+            if (remainingInvoices.length > 0) {
+              extractAndSaveLineItems(remainingInvoices);
+            }
+          }).catch((err) => console.error("[DB] Errore ricostruzione line items:", err));
+          
+          const deletedCount = invoices.length - remainingInvoices.length;
+          addToast(`Eliminate ${deletedCount} fatture di ${companyName}.`, "info");
+        },
+        "Elimina",
+        true
+      );
+    } else {
+      // Guest mode: delete ALL invoices (original behavior)
+      triggerConfirm(
+        "Elimina Tutti i Dati",
+        "Sei sicuro di voler eliminare definitivamente tutte le fatture caricate? Questa operazione non può essere annullata.",
+        () => {
+          setInvoices([]);
+          setSelectedInvoice(null);
+          clearInvoicesDB().catch(
+            (err) => console.error("[DB] Errore nell'eliminazione del database:", err)
+          );
+          clearLineItemsDB().catch(
+              (err) => console.error("[DB] Errore nell'eliminazione delle linee dettaglio:", err)
+          );
+          // Reset active filters
+          setSelectedYears([]);
+          setSelectedMonths([]);
+          setSelectedSupplier(null);
+          setSelectedCustomer(null);
 
-    triggerConfirm(
-      "Elimina Tutti i Dati",
-      "Sei sicuro di voler eliminare definitivamente tutte le fatture caricate? Questa operazione non può essere annullata.",
-      () => {
-        setInvoices([]);
-        setSelectedInvoice(null);
-        clearInvoicesDB().catch(
-          (err) => console.error("[DB] Errore nell'eliminazione del database:", err)
-        );
-        clearLineItemsDB().catch(
-            (err) => console.error("[DB] Errore nell'eliminazione delle linee dettaglio:", err)
-        );
-        // Reset active filters
-        setSelectedYears([]);
-        setSelectedMonths([]);
-        setSelectedSupplier(null);
-        setSelectedCustomer(null);
-
-        addToast("Tutti i dati caricati sono stati eliminati con successo.", "info");
-      },
-      "Elimina Tutto",
-      true
-    );
+          addToast("Tutti i dati caricati sono stati eliminati con successo.", "info");
+        },
+        "Elimina Tutto",
+        true
+      );
+    }
   };
 
   // Download raw XML
