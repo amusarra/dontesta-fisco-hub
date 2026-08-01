@@ -17,10 +17,10 @@ L'obiettivo è fornire uno strumento semplice e immediato per:
 - Chi desidera una vista rapida dei propri documenti fiscali senza dover contattare il commercialista
 - Chiunque voglia consultare le proprie fatture e corrispettivi offline e in modo più pratico
 
-Vai sulla [pagina delle release](https://github.com/amusarra/fattura-pa-reader/releases) per scaricare l'ultima versione
+Vai sulla [pagina delle release](https://github.com/amusarra/dontesta-fisco-hub/releases) per scaricare l'ultima versione
 disponibile per il tuo sistema operativo (Windows, macOS o Linux).
 
-[![Release & Desktop Build Pipeline](https://github.com/amusarra/fattura-pa-reader/actions/workflows/release.yml/badge.svg)](https://github.com/amusarra/fattura-pa-reader/actions/workflows/release.yml)
+[![Release & Desktop Build Pipeline](https://github.com/amusarra/dontesta-fisco-hub/actions/workflows/release.yml/badge.svg)](https://github.com/amusarra/dontesta-fisco-hub/actions/workflows/release.yml)
 
 ---
 
@@ -64,8 +64,8 @@ Indirizzo: Via Leonardo Da Vinci 1, 95100 Catania (CT)
 
 Puoi scaricare i file di esempio in due modi:
 
-- **Dal repository GitHub**: [docs/fatturapa/esempi](https://github.com/amusarra/fattura-pa-reader/tree/main/docs/fatturapa/esempi)
-- **Clonando il repo**: `git clone https://github.com/amusarra/fattura-pa-reader.git`
+- **Dal repository GitHub**: [docs/fatturapa/esempi](https://github.com/amusarra/dontesta-fisco-hub/tree/main/docs/fatturapa/esempi)
+- **Clonando il repo**: `git clone https://github.com/amusarra/dontesta-fisco-hub.git`
 
 ---
 
@@ -256,7 +256,7 @@ Se l'applicazione mostra uno schermo nero all'avvio su hardware datato o schede 
 Se riscontri errori di caricamento dinamico delle librerie all'avvio, assicurato che il sistema abbia installato la versione aggiornata del pacchetto webkit2gtk4.1 (es. aggiornando la distribuzione o tramite sudo dnf update webkit2gtk4.1 / sudo apt update && sudo apt upgrade).
 
 Hai riscontrato un bug o desideri proporre una nuova funzionalità?
-Controlla o apri una segnalazione sulla pagina delle [GitHub Issues](https://github.com/amusarra/fattura-pa-reader/issues).
+Controlla o apri una segnalazione sulla pagina delle [GitHub Issues](https://github.com/amusarra/dontesta-fisco-hub/issues).
 
 ---
 

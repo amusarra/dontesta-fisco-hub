@@ -39,8 +39,8 @@
     <icon type="stock">dontesta-FiscoHub</icon>
 
     <url type="homepage">https://www.dontesta.it</url>
-    <url type="bugtracker">https://github.com/amusarra/fattura-pa-reader/issues</url>
-    <url type="vcs-browser">https://github.com/amusarra/fattura-pa-reader</url>
+    <url type="bugtracker">https://github.com/amusarra/dontesta-fisco-hub/issues</url>
+    <url type="vcs-browser">https://github.com/amusarra/dontesta-fisco-hub</url>
 
     <content_rating type="oars-1.1" />
 
@@ -55,7 +55,7 @@
     <screenshots>
         <screenshot type="default">
             <caption>Dashboard analitica e gestione fatture</caption>
-            <image>https://raw.githubusercontent.com/amusarra/fattura-pa-reader/docs/resources/images/screenshot-main.png</image>
+            <image>https://raw.githubusercontent.com/amusarra/dontesta-fisco-hub/docs/resources/images/screenshot-main.png</image>
         </screenshot>
     </screenshots>
 </component>
