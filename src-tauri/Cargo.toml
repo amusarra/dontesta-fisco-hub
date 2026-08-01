@@ -4,7 +4,7 @@ version = "1.0.0-RC1"
 description = "Visualizzatore di Fatture Elettroniche e Corrispettivi XML scaricati dal Portale AdE"
 authors = ["Antonio Musarra <antonio.musarra@gmail.com>"]
 license = "MIT"
-repository = "https://github.com/amusarra/dontesta-fatturapa"
+repository = "https://github.com/amusarra/dontesta-fiscohub"
 edition = "2021"
 rust-version = "1.77"
 

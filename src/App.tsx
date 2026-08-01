@@ -1808,7 +1808,7 @@ export default function App() {
                 
                 {/* Source Repository */}
                 <a
-                  href="https://github.com/amusarra/dontesta-fatturapa"
+                  href="https://github.com/amusarra/dontesta-fisco-hub"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-between p-2.5 rounded-lg border border-slate-150 bg-white hover:bg-slate-50 hover:border-slate-200 transition-all text-slate-700 font-medium group"
@@ -1822,7 +1822,7 @@ export default function App() {
 
                 {/* GitHub Page */}
                 <a
-                  href="https://amusarra.github.io/dontesta-fatturapa/"
+                  href="https://amusarra.github.io/dontesta-fiscohub/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-between p-2.5 rounded-lg border border-slate-150 bg-white hover:bg-slate-50 hover:border-slate-200 transition-all text-slate-700 font-medium group"
