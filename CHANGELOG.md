@@ -7,6 +7,44 @@ e questo progetto aderisce a [Semantic Versioning](https://semver.org/lang/it/).
 
 ---
 
+## [1.2.0] - 2026-08-01
+
+### Aggiunto
+- **Isolamento Dati Multi-Utente (v6)**: Sistema completo per l'isolamento dei dati tra utenti e aziende.
+  - Campo `uploadedBy` su fatture e corrispettivi per tracciare chi ha caricato i documenti.
+  - Modalità Guest: visualizza e gestisce solo i propri documenti (`uploadedBy === "GUEST"`).
+  - Modalità Azienda: visualizza e gestisce solo i documenti della propria azienda (`uploadedBy === company.id`).
+  - Compatibilità retroattiva: documenti legacy (senza `uploadedBy`) visibili a tutti.
+  - Database schema v6 con migrazione automatica da v5.
+- **Documentazione Migliorata**: Chiarimento dello scopo dell'applicazione.
+  - README aggiornato per evidenziare che NON è un gestionale/contabile.
+  - Sezione "Come utilizzare l'applicazione" con flusso di lavoro consigliato.
+  - Nuova sezione FAQ per rispondere alle domande più comuni.
+  - Enfasi sul target: piccole attività, professionisti, consultazione autonoma.
+
+### Modificato
+- **Filtri Fatture e Corrispettivi**: Applicato filtro `uploadedBy` nei `useMemo` per isolamento dati.
+  - Guest: mostra solo `uploadedBy === "GUEST"` + legacy (undefined).
+  - Azienda: mostra solo `uploadedBy === company.id` + legacy (undefined).
+- **Funzioni di Eliminazione**: Rispettano l'isolamento dati.
+  - `handleClearAllCorrispettivi` (Guest): elimina solo corrispettivi Guest.
+  - `handleResetDatabase` (Guest): elimina solo fatture Guest.
+  - Modalità Azienda: elimina solo documenti dell'azienda corrente.
+
+### Corretto
+- **Bug eliminazione massiva**: In modalità Guest, "Svuota Lista" ora elimina solo i dati del Guest e non quelli di tutte le aziende.
+- **Errore caricamento iniziale**: Gestito caso `activeCompany === null` in `getCurrentUploadedBy()`.
+- **Filtri corrispettivi**: Top Beni e Servizi ora filtra correttamente i fornitori per azienda corrente.
+- **Contatore header**: "Fatture: k di x" ora mostra il totale specifico dell'azienda corrente.
+- **Database migration v5→v6**: Aggiunto campo `uploadedBy` senza breaking changes.
+
+### Tecnologie e Miglioramenti
+- Migrazione database da v5 a v6 con schema evolutivo.
+- Propagazione campo `uploadedBy` durante caricamento, parsing e salvataggio documenti.
+- Filtri reattivi ottimizzati con `useMemo` per performance.
+
+---
+
 ## [1.1.0] - 2026-07-21
 
 ### Aggiunto

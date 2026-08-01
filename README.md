@@ -1,14 +1,50 @@
-# DonTesta FatturaPA 🚀
+# DonTesta FiscoHub 🚀
 
-> **Visualizzatore open-source e cross-platform per fatture elettroniche XML (FatturaPA), supportato dal Blog di Antonio Musarra ([dontesta.it](https://www.dontesta.it)).**
+> **Visualizzatore open-source e cross-platform per fatture elettroniche XML e corrispettivi telematici, supportato dal Blog di Antonio Musarra ([dontesta.it](https://www.dontesta.it)).**
 
-DonTesta FiscoHub consente di importare, organizzare e visualizzare le fatture elettroniche e corrispettivi in modo semplice, veloce ed 
-efficiente, direttamente nel tuo browser o come applicazione desktop nativa. **Non è un software di contabilità**.
+DonTesta FiscoHub è uno strumento di **visualizzazione e analisi veloce** delle fatture elettroniche e corrispettivi scaricati direttamente dal **Portale dell'Agenzia delle Entrate**. 
+
+**⚠️ Importante: Questa NON è un'applicazione gestionale o contabile.**
+
+L'obiettivo è fornire uno strumento semplice e immediato per:
+- 👀 **Visualizzare** fatture emesse e ricevute in formato chiaro e leggibile
+- 📊 **Analizzare** volumi d'affari, spese, IVA e andamenti temporali
+- 🔍 **Ricercare** fatture e corrispettivi senza dover navigare nel portale AdE
+- 📈 **Monitorare** i propri dati fiscali in autonomia
+
+**👥 A chi è utile:**
+- Piccole attività e professionisti che non dispongono di un gestionale completo
+- Chi desidera una vista rapida dei propri documenti fiscali senza dover contattare il commercialista
+- Chiunque voglia consultare le proprie fatture e corrispettivi offline e in modo più pratico
 
 Vai sulla [pagina delle release](https://github.com/amusarra/fattura-pa-reader/releases) per scaricare l'ultima versione
 disponibile per il tuo sistema operativo (Windows, macOS o Linux).
 
 [![Release & Desktop Build Pipeline](https://github.com/amusarra/fattura-pa-reader/actions/workflows/release.yml/badge.svg)](https://github.com/amusarra/fattura-pa-reader/actions/workflows/release.yml)
+
+---
+
+## 📥 Come utilizzare l'applicazione
+
+### Flusso di lavoro consigliato
+
+1. **Scarica i tuoi dati dal Portale dell'Agenzia delle Entrate**
+   - Accedi al [Portale Fatture e Corrispettivi](https://ivaservizi.agenziaentrate.gov.it/portale/)
+   - Scarica le fatture elettroniche (file `.xml` o `.xml.p7m`) dalla sezione "Consultazione"
+   - Scarica i corrispettivi telematici dalla sezione dedicata
+
+2. **Importa i file in DonTesta FiscoHub**
+   - Carica i file XML tramite drag & drop o seleziona una cartella
+   - L'applicazione riconosce automaticamente fatture e corrispettivi
+   - Tutti i dati rimangono sul tuo dispositivo (elaborazione 100% locale)
+
+3. **Visualizza e analizza**
+   - Consulta le fatture emesse (fatturato) e ricevute (spese)
+   - Monitora gli andamenti temporali e i KPI fiscali
+   - Ricerca fatture per fornitore, cliente, periodo o contenuto
+   - Genera report visivi per una comprensione immediata
+
+**💡 Nota**: I file XML scaricati dal portale AdE sono già in formato standard FatturaPA. Non è necessaria alcuna conversione o elaborazione preliminare.
 
 ---
 
@@ -22,7 +58,8 @@ disponibile per il tuo sistema operativo (Windows, macOS o Linux).
     - Classificazione automatica di fatture e corrispettivi (EMESSA/RICEVUTA) basata su normalizzazione dei codici fiscali e Partite IVA.
     - Cambio azienda attiva in qualsiasi momento.
 - 💻 **Desktop Ready (Tauri v2)**: Applicazione nativa ultraleggera e sicura per Windows, macOS (Apple Silicon **e** Intel) e Linux.
-- 🔒 **Sicurezza Client-Side**: Tutti i dati rimangono sul tuo dispositivo. Nessuna informazione sensibile viene inviata a server esterni.
+- 🔒 **Sicurezza Client-Side**: Tutti i dati rimangono sul tuo dispositivo. Nessuna informazione sensibile viene inviata a server esterni. Perfetto per mantenere la privacy dei tuoi documenti fiscali.
+- 🗂️ **Isolamento Multi-Utente**: Modalità Guest e gestione multi-azienda con isolamento completo dei dati. Ogni azienda/utente vede e gestisce solo i propri documenti.
 - 📊 **Dashboard Analitica Avanzata**:
     - Grafici separati per fatture emesse (fatturato) e ricevute (spese).
     - KPIs dedicati: Volume d'Affari, Totale Imponibile, **Totale IVA**, conteggi emesse/ricevute.
@@ -137,6 +174,25 @@ Tutti gli artefatti vengono raccolti e allegati a una **bozza di release GitHub*
 Compila e pubblica automaticamente la landing page in `/docs` a ogni push sul ramo `main`.
 
 La pagina è accessibile all'indirizzo `https://<tuo-utente>.github.io/<nome-repo>/`.
+
+---
+
+## ❓ Domande Frequenti (FAQ)
+
+### Questa applicazione sostituisce il mio commercialista o il gestionale aziendale?
+**No.** DonTesta FiscoHub è uno strumento di **visualizzazione e consultazione**, non un software gestionale o contabile. Non gestisce registri IVA, prima nota, bilanci o adempimenti fiscali. Per questi aspetti è sempre necessario affidarsi a un commercialista o utilizzare un software gestionale certificato.
+
+### Devo caricare i dati ogni volta che apro l'applicazione?
+**No.** I dati vengono salvati localmente nel tuo dispositivo tramite IndexedDB e persistono tra le sessioni. Devi caricare i file XML solo la prima volta o quando scarichi nuovi documenti dal portale AdE.
+
+### Posso usare questa applicazione per la mia dichiarazione dei redditi?
+DonTesta FiscoHub ti aiuta a **consultare e analizzare** i tuoi dati fiscali, ma non genera dichiarazioni fiscali né produce i documenti necessari per gli adempimenti. Utilizza sempre un commercialista o un software fiscale certificato per le dichiarazioni ufficiali.
+
+### I miei dati sono al sicuro?
+**Sì.** L'applicazione lavora completamente offline. Tutti i file XML vengono elaborati localmente sul tuo dispositivo e nessun dato viene mai inviato a server esterni. La versione desktop offre un ulteriore livello di sicurezza rispetto alla versione web.
+
+### Posso gestire più attività o partite IVA?
+**Sì.** L'applicazione supporta la gestione multi-azienda. Puoi configurare più anagrafiche aziendali e passare da una all'altra. I documenti vengono classificati automaticamente come emessi o ricevuti in base all'azienda attiva, e i dati rimangono isolati tra le diverse aziende.
 
 ---
 
