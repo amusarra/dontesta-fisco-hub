@@ -12,12 +12,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Search, Building, FileSpreadsheet, FileText, TrendingDown, X } from "lucide-react";
 import { useTopLineItems } from "../hooks/useTopLineItems";
+import { Azienda } from "../types";
 
 interface TopBeniServiziSectionProps {
   onShowNotification?: (message: string, type: "success" | "error" | "info") => void;
   onSelectInvoice?: (invoiceId: string) => void;
   selectedYears: string[];
   selectedMonths: string[];
+  activeCompany?: Azienda | null;
 }
 
 export function TopBeniServiziSection({
@@ -25,6 +27,7 @@ export function TopBeniServiziSection({
   onSelectInvoice,
   selectedYears,
   selectedMonths,
+  activeCompany,
 }: TopBeniServiziSectionProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSupplierId, setSelectedSupplierId] = useState<string>("");
@@ -62,7 +65,10 @@ export function TopBeniServiziSection({
   const { items, allItems, summary, suppliersList, isLoading, hasActiveFilter } = 
     useTopLineItems({ 
       searchQuery, 
-      selectedSupplierId: selectedSupplierId || undefined, 
+      selectedSupplierId: selectedSupplierId || undefined,
+      currentCompanyId: activeCompany && !activeCompany.isDummy 
+        ? (activeCompany.partitaIva || activeCompany.codiceFiscale) 
+        : undefined,
       selectedYears,
       selectedMonths,
       limit: displayLimit 

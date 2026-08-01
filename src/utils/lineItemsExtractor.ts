@@ -75,6 +75,17 @@ export async function extractAndSaveLineItems(
         `${invoice.cedentePrestatore.anagrafica.nome || ""} ${invoice.cedentePrestatore.anagrafica.cognome || ""}`.trim() ||
         "Fornitore Sconosciuto";
 
+    // Extract customer ID (P.IVA or CF as fallback) - NEW in v5
+    const cessionarioId =
+        invoice.cessionarioCommittente.anagrafica.partitaIva ||
+        invoice.cessionarioCommittente.anagrafica.codiceFiscale ||
+        "UNKNOWN";
+
+    const cessionarioDenominazione =
+        invoice.cessionarioCommittente.anagrafica.denominazione ||
+        `${invoice.cessionarioCommittente.anagrafica.nome || ""} ${invoice.cessionarioCommittente.anagrafica.cognome || ""}`.trim() ||
+        "Cliente Sconosciuto";
+
     // Extract each line from the invoice
     for (const linea of invoice.linee) {
       const lineItem: LineItemRecord = {
@@ -83,6 +94,8 @@ export async function extractAndSaveLineItems(
         numeroLinea: linea.numeroLinea,
         cedenteId,
         cedenteDenominazione,
+        cessionarioId,
+        cessionarioDenominazione,
         descrizione: linea.descrizione || "",
         quantita: linea.quantita || 0,
         unitaMisura: linea.unitaMisura,

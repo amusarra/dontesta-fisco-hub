@@ -6,7 +6,7 @@ import { openDB, IDBPDatabase } from "idb";
 import { Azienda, FatturaElettronica, InvoiceDirection } from "../types";
 
 const DB_NAME = "fattura_pa_reader_db";
-const DB_VERSION = 4;  // Updated to match db.ts
+const DB_VERSION = 5;  // Updated to match db.ts
 const COMPANY_STORE = "companies";
 const LS_ACTIVE_COMPANY_KEY = "dontesta_active_company_id";
 
@@ -25,7 +25,7 @@ let _db: IDBPDatabase<any> | null = null;
 async function getDB(): Promise<IDBPDatabase<any>> {
   if (_db) return _db;
   _db = await openDB(DB_NAME, DB_VERSION, {
-    upgrade(db) {
+    upgrade(db, oldVersion) {
       if (!db.objectStoreNames.contains("invoices")) {
         db.createObjectStore("invoices", { keyPath: "id" });
       }
@@ -35,10 +35,18 @@ async function getDB(): Promise<IDBPDatabase<any>> {
       if (!db.objectStoreNames.contains("corrispettivi")) {
         db.createObjectStore("corrispettivi", { keyPath: "id" });
       }
-      // Line items store added in v4
+      
+      // Line items store - handle v4 to v5 migration
+      if (oldVersion < 5 && db.objectStoreNames.contains("dettaglioLinee")) {
+        // Delete old store and recreate with new schema
+        console.log("[CompanyDB] Migrating line items store from v4 to v5 (adding cessionarioId)");
+        db.deleteObjectStore("dettaglioLinee");
+      }
+      
       if (!db.objectStoreNames.contains("dettaglioLinee")) {
         const lineStore = db.createObjectStore("dettaglioLinee", { keyPath: "id" });
         lineStore.createIndex("cedenteId", "cedenteId", { unique: false });
+        lineStore.createIndex("cessionarioId", "cessionarioId", { unique: false });
         lineStore.createIndex("descrizione", "descrizione", { unique: false });
         lineStore.createIndex("fatturaId", "fatturaId", { unique: false });
       }

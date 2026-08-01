@@ -42,7 +42,7 @@ import CorrispettiviList from "./components/CorrispettiviList";
 import { parseFatturaXML, validateFatturaXML, extractXmlFromP7m, decodeXmlBytes } from "./utils/parser";
 import { validateCorrispettivoXML, parseCorrispettivoXML } from "./utils/corrispettiviParser";
 import { loadInvoicesFromDB, saveInvoicesToDB, clearInvoicesDB, migrateFromLocalStorage, loadCorrispettiviFromDB, saveCorrispettiviToDB, clearCorrispettiviDB, clearLineItemsDB } from "./utils/db";
-import { loadCompaniesFromDB, saveCompanyToDB, deleteCompanyFromDB, getActiveCompanyIdFromLS, setActiveCompanyIdInLS, DUMMY_GUEST_COMPANY } from "./utils/companyDb";
+import { loadCompaniesFromDB, saveCompanyToDB, deleteCompanyFromDB, getActiveCompanyIdFromLS, setActiveCompanyIdInLS, DUMMY_GUEST_COMPANY, getInvoiceDirection } from "./utils/companyDb";
 import { FatturaElettronica, DatiCorrispettivi, Azienda } from "./types";
 import appMetadata from "../metadata.json";
 import {extractAndSaveLineItems} from "@/src/utils/lineItemsExtractor.ts";
@@ -783,6 +783,13 @@ export default function App() {
   // Core filtering logic for middle list & left sidebar highlights
   const filteredInvoices = useMemo(() => {
     return invoices.filter((inv) => {
+      // 0. Company Filter (Active Company) - filtra fatture per azienda attiva
+      if (activeCompany && !activeCompany.isDummy) {
+        const direction = getInvoiceDirection(inv, activeCompany);
+        // Escludi fatture non classificate (UNCLASSIFIED) quando un'azienda è selezionata
+        if (direction === "UNCLASSIFIED") return false;
+      }
+
       // 1. Year Filter (multi-select)
       if (selectedYears.length > 0) {
         const invYear = inv.datiGenerali.data.split("-")[0];
@@ -809,7 +816,20 @@ export default function App() {
 
       return true;
     });
-  }, [invoices, selectedYears, selectedMonths, selectedSupplier, selectedCustomer]);
+  }, [invoices, selectedYears, selectedMonths, selectedSupplier, selectedCustomer, activeCompany]);
+
+  // Filter corrispettivi by active company
+  const filteredCorrispettivi = useMemo(() => {
+    if (!activeCompany || activeCompany.isDummy) {
+      return corrispettivi;
+    }
+
+    return corrispettivi.filter((corr) => {
+      const matchesPiva = corr.pivaEsercente === activeCompany.partitaIva;
+      const matchesCf = activeCompany.codiceFiscale && corr.cfEsercente === activeCompany.codiceFiscale;
+      return matchesPiva || matchesCf;
+    });
+  }, [corrispettivi, activeCompany]);
 
   // Handle smart auto-selection when filters change
   useEffect(() => {
@@ -1247,9 +1267,9 @@ export default function App() {
             >
               <Sparkles className="h-4 w-4 text-amber-400" />
               <span className="hidden sm:inline">Corrispettivi</span>
-              {corrispettivi.length > 0 && (
+              {filteredCorrispettivi.length > 0 && (
                 <span className="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded font-mono font-bold">
-                  {corrispettivi.length}
+                  {filteredCorrispettivi.length}
                 </span>
               )}
             </button>
@@ -1379,8 +1399,8 @@ export default function App() {
       {/* MAIN VIEW CONTENT: CHARTS, CORRISPETTIVI, OR INVOICES */}
       {activeView === "charts" ? (
         <AnalyticsDashboard
-          invoices={invoices}
-          corrispettivi={corrispettivi}
+          invoices={filteredInvoices}
+          corrispettivi={filteredCorrispettivi}
           selectedYears={selectedYears}
           selectedMonths={selectedMonths}
           onClose={() => setActiveView("list")}
@@ -1398,7 +1418,7 @@ export default function App() {
         />
       ) : activeView === "corrispettivi" ? (
         <CorrispettiviList
-          corrispettivi={corrispettivi}
+          corrispettivi={filteredCorrispettivi}
           selectedYears={selectedYears}
           selectedMonths={selectedMonths}
           onUploadCorrispettivi={handleUploadInvoices}
@@ -1414,7 +1434,7 @@ export default function App() {
           {isSidebarExpanded && (
             <div className="print:hidden h-full">
               <Sidebar
-                invoices={invoices}
+                invoices={filteredInvoices}
                 selectedSupplier={selectedSupplier}
                 setSelectedSupplier={setSelectedSupplier}
                 selectedCustomer={selectedCustomer}

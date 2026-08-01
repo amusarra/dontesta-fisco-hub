@@ -983,6 +983,7 @@ export default function AnalyticsDashboard({
         onSelectInvoice={onSelectInvoice}
         selectedYears={selectedYears}
         selectedMonths={selectedMonths}
+        activeCompany={activeCompany}
       />
         </div>
       )}

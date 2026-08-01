@@ -120,19 +120,42 @@ export function useTopLineItems({
     };
   }, [selectedSupplierId]);
 
-  // Extract unique suppliers for dropdown (excluding current company)
+  // Apply the dashboard's temporal filters before the local supplier/text filters.
+  // Line items retain their invoice date, so the same filters used by the
+  // invoice charts can be applied without reloading or reparsing invoices.
+  const filteredLineItems = useMemo((): LineItemRecord[] => {
+    let items = rawLineItems;
+
+    // Filter by current company: show only items where the company is the customer (cessionario)
+    if (currentCompanyId) {
+      // Normalize IDs for comparison (remove IT prefix, uppercase)
+      const cleanId = (id?: string) => (id ? id.trim().toUpperCase().replace(/^IT/, '') : '');
+      const normCompanyId = cleanId(currentCompanyId);
+      
+      items = items.filter((item) => {
+        // Only show items where current company is the customer (cessionario)
+        const itemCessionarioId = cleanId(item.cessionarioId);
+        return itemCessionarioId === normCompanyId;
+      });
+    }
+
+    items = items.filter((item) => matchesPeriod(item, selectedYears, selectedMonths));
+
+    if (!debouncedQuery.trim()) {
+      return items;
+    }
+
+    return items.filter((item) =>
+        isFuzzyMatch(debouncedQuery, item.descrizione, 1)
+    );
+  }, [rawLineItems, debouncedQuery, currentCompanyId, selectedYears, selectedMonths]);
+
+  // Extract unique suppliers for dropdown - MUST be calculated AFTER filtering for current company
   const suppliersList = useMemo((): SupplierOption[] => {
     const suppliersMap = new Map<string, { name: string; count: number }>();
 
-    for (const item of rawLineItems) {
-      if (currentCompanyId && item.cedenteId === currentCompanyId) {
-        continue;
-      }
-
-      if (!matchesPeriod(item, selectedYears, selectedMonths)) {
-        continue;
-      }
-
+    // Use filteredLineItems (already filtered by currentCompanyId) to get only relevant suppliers
+    for (const item of filteredLineItems) {
       if (suppliersMap.has(item.cedenteId)) {
         suppliersMap.get(item.cedenteId)!.count++;
       } else {
@@ -150,28 +173,7 @@ export function useTopLineItems({
           lineCount: data.count,
         }))
         .sort((a, b) => a.name.localeCompare(b.name));
-  }, [rawLineItems, currentCompanyId, selectedYears, selectedMonths]);
-
-  // Apply the dashboard's temporal filters before the local supplier/text filters.
-  // Line items retain their invoice date, so the same filters used by the
-  // invoice charts can be applied without reloading or reparsing invoices.
-  const filteredLineItems = useMemo((): LineItemRecord[] => {
-    let items = rawLineItems;
-
-    if (currentCompanyId) {
-      items = items.filter((item) => item.cedenteId !== currentCompanyId);
-    }
-
-    items = items.filter((item) => matchesPeriod(item, selectedYears, selectedMonths));
-
-    if (!debouncedQuery.trim()) {
-      return items;
-    }
-
-    return items.filter((item) =>
-        isFuzzyMatch(debouncedQuery, item.descrizione, 1)
-    );
-  }, [rawLineItems, debouncedQuery, currentCompanyId, selectedYears, selectedMonths]);
+  }, [filteredLineItems]);
 
   // Aggregate by description (group by)
   const aggregatedItems = useMemo((): LineItemAggregate[] => {

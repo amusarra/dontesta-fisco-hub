@@ -13,7 +13,7 @@
 import { openDB, IDBPDatabase } from "idb";
 
 const DB_NAME = "fattura_pa_reader_db";
-const DB_VERSION = 4;  // Increased for line items store
+const DB_VERSION = 5;  // Increased for cessionarioId field in line items
 const STORE_NAME = "invoices";
 const COMPANY_STORE_NAME = "companies";
 const CORRISPETTIVI_STORE_NAME = "corrispettivi";
@@ -44,6 +44,10 @@ export interface LineItemRecord {
   cedenteId: string;     // P.IVA or CF del fornitore
   cedenteDenominazione: string;
   
+  // Customer info for filtering (NEW in v5)
+  cessionarioId: string;     // P.IVA or CF del cliente
+  cessionarioDenominazione: string;
+  
   // Line details
   descrizione: string;
   quantita: number;
@@ -70,7 +74,7 @@ type FatturaDB = {
   [LINE_ITEMS_STORE_NAME]: {
     key: string;
     value: LineItemRecord;
-    indexes: { cedenteId: string; descrizione: string };
+    indexes: { cedenteId: string; cessionarioId: string; descrizione: string };
   };
 };
 
@@ -90,10 +94,19 @@ async function getDB(): Promise<IDBPDatabase<any>> {
       if (!db.objectStoreNames.contains(CORRISPETTIVI_STORE_NAME)) {
         db.createObjectStore(CORRISPETTIVI_STORE_NAME, { keyPath: "id" });
       }
-      // New in v4: Line items store with indexes for efficient filtering
+      
+      // Line items store - handle v4 to v5 migration
+      if (oldVersion < 5 && db.objectStoreNames.contains(LINE_ITEMS_STORE_NAME)) {
+        // Delete old store and recreate with new schema
+        console.log("[DB] Migrating line items store from v4 to v5 (adding cessionarioId)");
+        db.deleteObjectStore(LINE_ITEMS_STORE_NAME);
+      }
+      
       if (!db.objectStoreNames.contains(LINE_ITEMS_STORE_NAME)) {
+        // Creating store from scratch (v4+) or recreating (v5 migration)
         const lineStore = db.createObjectStore(LINE_ITEMS_STORE_NAME, { keyPath: "id" });
         lineStore.createIndex("cedenteId", "cedenteId", { unique: false });
+        lineStore.createIndex("cessionarioId", "cessionarioId", { unique: false });
         lineStore.createIndex("descrizione", "descrizione", { unique: false });
         lineStore.createIndex("fatturaId", "fatturaId", { unique: false });
       }
