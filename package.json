@@ -23,7 +23,7 @@
     "@vitejs/plugin-react": "^5.0.4",
     "dompurify": "^3.4.12",
     "dotenv": "^17.2.3",
-    "express": "^4.21.2",
+    "express": "^5.2.1",
     "html2canvas": "^1.4.1",
     "html2canvas-pro": "^2.2.4",
     "idb": "^8.0.3",
